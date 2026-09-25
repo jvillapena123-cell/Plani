@@ -717,6 +717,7 @@ function buildSite(container, siteKey, siteLabel, vessels, rangeStart, rangeEnd,
   const LEFT_COLS = getLeftCols();
   const LEFT_OFFSETS = computeOffsets(LEFT_COLS);
   const LEFT_TOTAL_WIDTH = LEFT_COLS.reduce((s,c)=>s+c.width, 0);
+  LEFT_OFFSETS[LEFT_COLS.length] = LEFT_TOTAL_WIDTH; // offset for the trailing actions column (edit mode)
   const leftColsTemplate = LEFT_COLS.map(c=>c.width+'px').join(' ') + (editMode ? ` ${ACTIONS_COL_WIDTH}px` : '');
   const totalLeftWidth = LEFT_TOTAL_WIDTH + (editMode ? ACTIONS_COL_WIDTH : 0);
   grid.style.gridTemplateColumns = `${leftColsTemplate} repeat(${totalDays}, minmax(${dayColMin}, 1fr))`;
