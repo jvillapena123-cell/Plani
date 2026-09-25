@@ -219,6 +219,28 @@
     .modal-actions{flex-wrap:wrap;}
     .modal-actions .modal-btn{flex:1;min-width:100px;}
   }
+  .vessel-cards{padding:12px;display:flex;flex-direction:column;gap:10px;}
+  .vessel-card{
+    background:var(--panel);border:1px solid var(--border);border-left:4px solid var(--border-soft);
+    border-radius:12px;padding:12px 14px;position:relative;
+  }
+  .vessel-card.op{border-left-color:#1E9E5A;}
+  .vessel-card.mant{border-left-color:#E0B400;}
+  .vessel-card.tbc{border-left-color:var(--blue);}
+  .card-top{display:flex;justify-content:space-between;align-items:center;gap:8px;padding-right:60px;}
+  .card-nave{font-weight:700;font-size:14.5px;}
+  .card-nave.tbc-text{color:var(--brand-orange);}
+  .card-n{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--text-faint);margin:2px 0 8px;}
+  .card-row{display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;border-bottom:1px dashed var(--border);}
+  .card-row:last-of-type{border-bottom:none;}
+  .card-row span{color:var(--text-dim);}
+  .card-flag{margin-top:8px;font-size:11.5px;color:var(--red);font-weight:600;}
+  .card-actions{position:absolute;top:10px;right:10px;display:flex;gap:6px;}
+  .status-chip{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;}
+  .status-chip.op{background:var(--green-dim);color:var(--green);}
+  .status-chip.mant{background:var(--yellow-dim);color:#8A6E00;}
+  .status-chip.tbc{background:var(--blue-dim);color:var(--blue);}
+
   @media (max-width:480px){
     h1{font-size:17px;}
     .id-line{font-size:9.5px;}
@@ -619,6 +641,51 @@ function cellValue(v, key){
   return v[key] || '—';
 }
 
+function isMobileView(){ return window.innerWidth <= 720; }
+
+function buildMobileCards(el, siteKey, siteLabel, relevant, headHtml){
+  const editMode = !!window.__editMode;
+  const clientView = !!window.__clientView;
+  const statusLabel = {op:'Operación', mant:'Mantención', tbc:'Ventana/TBC'};
+
+  const cardsHtml = relevant.map(v=>{
+    const giraSeg = v._segments.find(s=>s.cls==='espera');
+    const giraNote = giraSeg ? `<div class="card-flag">⚠ En gira hasta ${fmtShort(giraSeg.end)}</div>` : '';
+    const editBtns = editMode ? `<div class="card-actions">
+        <button type="button" class="edit" data-site="${siteKey}" data-n="${v.n}" title="Editar">✎</button>
+        <button type="button" class="del" data-site="${siteKey}" data-n="${v.n}" title="Eliminar">✕</button>
+      </div>` : '';
+    const detailRows = clientView ? '' : `
+      <div class="card-row"><span>Agencia</span><b>${esc(v.agencia||'—')}</b></div>
+      <div class="card-row"><span>Cliente</span><b>${esc(v.cliente||'—')}</b></div>
+      <div class="card-row"><span>Faena</span><b>${esc(v.faena||'—')}</b></div>
+      <div class="card-row"><span>Producto</span><b>${esc(v.producto||'—')}</b></div>
+      <div class="card-row"><span>Tons</span><b>${v.tons!=null ? v.tons.toLocaleString('es-CL') : '—'}</b></div>`;
+    return `<div class="vessel-card ${v._class}">
+      ${editBtns}
+      <div class="card-top">
+        <div class="card-nave${v._class==='tbc' ? ' tbc-text' : ''}">${esc(v.nave)}</div>
+        <span class="status-chip ${v._class}">${statusLabel[v._class]||''}</span>
+      </div>
+      <div class="card-n">N° ${v.n}</div>
+      ${detailRows}
+      <div class="card-row"><span>ETA</span><b>${v.eta ? fmtShort(parseDate(v.eta)) : '—'}</b></div>
+      <div class="card-row"><span>ETB</span><b>${v.etb ? fmtShort(parseDate(v.etb)) : '—'}</b></div>
+      <div class="card-row"><span>ETD</span><b>${v.etd ? fmtShort(parseDate(v.etd)) : '—'}</b></div>
+      ${giraNote}
+    </div>`;
+  }).join('');
+
+  el.innerHTML = headHtml + `<div class="vessel-cards">${cardsHtml || '<div class="empty-row">Sin naves programadas en este periodo.</div>'}</div>`;
+
+  if(editMode){
+    const footer = document.createElement('div');
+    footer.className = 'add-vessel-row';
+    footer.innerHTML = `<button type="button" class="btn-add-vessel" data-site="${siteKey}">+ Agregar nave en ${siteLabel}</button>`;
+    el.appendChild(footer);
+  }
+}
+
 function buildSite(container, siteKey, siteLabel, vessels, rangeStart, rangeEnd, rangeLabel, isAll){
   const totalDays = daysBetween(rangeStart, rangeEnd) + 1;
   const relevant = vessels
@@ -627,16 +694,21 @@ function buildSite(container, siteKey, siteLabel, vessels, rangeStart, rangeEnd,
 
   const el = document.createElement('div');
   el.className = 'site';
+  container.appendChild(el);
 
   const dotClass = siteKey==='norte' ? 'dot-norte' : 'dot-sur';
-  el.innerHTML = `
+  const headHtml = `
     <div class="site-head">
       <div class="site-title"><span class="dot ${dotClass}"></span>${siteLabel}</div>
       <div class="site-count">${relevant.length} nave${relevant.length===1?'':'s'} · ${rangeLabel}</div>
-    </div>
-    <div class="gantt-scroll"><div class="gantt" id="grid-${siteKey}"></div></div>
-  `;
-  container.appendChild(el);
+    </div>`;
+
+  if(isMobileView()){
+    buildMobileCards(el, siteKey, siteLabel, relevant, headHtml);
+    return;
+  }
+
+  el.innerHTML = headHtml + `<div class="gantt-scroll"><div class="gantt" id="grid-${siteKey}"></div></div>`;
 
   const editMode = !!window.__editMode;
   const nRows = Math.max(relevant.length, 1);
@@ -1015,7 +1087,7 @@ const UPLOAD_PASSWORD = 'HTP2026';
 document.getElementById('btnUploadExcel').addEventListener('click', function(){
   const pass = window.prompt('Ingresa la clave para cargar una nueva planificación:');
   if(pass === null) return; // cancelled
-  if(pass !== UPLOAD_PASSWORD){
+  if(pass.trim().toUpperCase() !== UPLOAD_PASSWORD.toUpperCase()){
     const uploadNotice = document.getElementById('uploadNotice');
     uploadNotice.className = 'notice error';
     uploadNotice.style.display = 'block';
@@ -1099,7 +1171,7 @@ document.getElementById('btnEditMode').addEventListener('click', ()=>{
   if(!window.__editMode){
     const p = window.prompt('Ingresa la clave para editar la planificación:');
     if(p === null) return;
-    if(p !== EDIT_PASSWORD){
+    if(p.trim().toUpperCase() !== EDIT_PASSWORD.toUpperCase()){
       const uploadNotice = document.getElementById('uploadNotice');
       uploadNotice.className = 'notice error';
       uploadNotice.style.display = 'block';
@@ -1345,6 +1417,18 @@ document.getElementById('btnExportExcel').addEventListener('click', ()=>{
   }catch(err){
     window.alert('No se pudo generar el Excel: ' + (err.message||String(err)));
   }
+});
+
+let __lastMobileState = isMobileView();
+window.addEventListener('resize', ()=>{
+  clearTimeout(window.__mobileResizeTimer);
+  window.__mobileResizeTimer = setTimeout(()=>{
+    const nowMobile = isMobileView();
+    if(nowMobile !== __lastMobileState){
+      __lastMobileState = nowMobile;
+      render();
+    }
+  }, 200);
 });
 
 // ---------- Initial load: render immediately from local cache, then sync live with Firestore ----------
