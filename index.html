@@ -439,7 +439,7 @@
       </div>
       <div class="form-row">
         <label>Toneladas
-          <input type="number" id="f_tons" min="0">
+          <input type="number" id="f_tons" min="0" step="any">
         </label>
         <label>Color (opcional)
           <select id="f_color">
@@ -616,7 +616,7 @@ const FULL_LEFT_COLS = [
   {key:'cliente', label:'CLIENTE', width:172},
   {key:'faena', label:'FAENA', width:82},
   {key:'producto', label:'PRODUCTO', width:158},
-  {key:'tons', label:'TONS', width:62},
+  {key:'tons', label:'TONS', width:72},
   {key:'eta', label:'ETA', width:76},
   {key:'etb', label:'ETB', width:76},
   {key:'etd', label:'ETD', width:76},
@@ -633,7 +633,7 @@ function computeOffsets(cols){ let acc=0; return cols.map(c=>{ const o=acc; acc+
 const ACTIONS_COL_WIDTH = 52;
 
 function cellValue(v, key){
-  if(key==='tons') return v.tons!=null ? v.tons.toLocaleString('es-CL') : '—';
+  if(key==='tons') return v.tons!=null ? v.tons.toLocaleString('es-CL', {maximumFractionDigits:0}) : '—';
   if(key==='eta' || key==='etb' || key==='etd'){
     const val = v[key];
     return val ? fmtShort(parseDate(val)) : '—';
@@ -660,7 +660,7 @@ function buildMobileCards(el, siteKey, siteLabel, relevant, headHtml){
       <div class="card-row"><span>Cliente</span><b>${esc(v.cliente||'—')}</b></div>
       <div class="card-row"><span>Faena</span><b>${esc(v.faena||'—')}</b></div>
       <div class="card-row"><span>Producto</span><b>${esc(v.producto||'—')}</b></div>
-      <div class="card-row"><span>Tons</span><b>${v.tons!=null ? v.tons.toLocaleString('es-CL') : '—'}</b></div>`;
+      <div class="card-row"><span>Tons</span><b>${v.tons!=null ? v.tons.toLocaleString('es-CL', {maximumFractionDigits:0}) : '—'}</b></div>`;
     return `<div class="vessel-card ${v._class}">
       ${editBtns}
       <div class="card-top">
@@ -951,7 +951,7 @@ function attachTooltips(){
     const etaS = v.eta ? fmtShort(parseDate(v.eta)) : '—';
     const etbS = v.etb ? fmtShort(parseDate(v.etb)) : '—';
     const etdS = v.etd ? fmtShort(parseDate(v.etd)) : '—';
-    const tons = v.tons!=null ? v.tons.toLocaleString('es-CL')+' t' : '—';
+    const tons = v.tons!=null ? v.tons.toLocaleString('es-CL', {maximumFractionDigits:0})+' t' : '—';
     const issue = KNOWN_ISSUES.find(i=>i.site===site && i.n===n);
     const extraRows = window.__clientView ? '' : `
       <div class="vt-row"><span>Agencia</span><b>${esc(v.agencia||'—')}</b></div>
