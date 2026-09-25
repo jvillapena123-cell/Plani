@@ -243,6 +243,7 @@
   .status-chip.mant{background:var(--yellow-dim);color:#8A6E00;}
   .status-chip.tbc{background:var(--blue-dim);color:var(--blue);}
   .status-chip.done{background:var(--blue-dim);color:var(--blue);}
+  .status-chip.progress{background:var(--brand-orange-dim);color:var(--brand-orange);}
 
   @media (max-width:480px){
     h1{font-size:17px;}
@@ -667,9 +668,12 @@ function buildMobileCards(el, siteKey, siteLabel, relevant, headHtml){
   const cardsHtml = relevant.map(v=>{
     const giraSeg = v._segments.find(s=>s.cls==='espera');
     const giraNote = giraSeg ? `<div class="card-flag">⚠ En gira hasta ${fmtShort(giraSeg.end)}</div>` : '';
-    const isFinished = v.etd && parseDate(v.etd) < today;
-    const chipClass = isFinished ? 'done' : v._class;
-    const chipLabel = isFinished ? 'Terminado' : (statusLabel[v._class]||'');
+    const etbDate = v.etb ? parseDate(v.etb) : null;
+    const etdDate = v.etd ? parseDate(v.etd) : null;
+    const isFinished = etdDate && etdDate < today;
+    const isInProgress = !isFinished && etbDate && etdDate && etbDate <= today && today <= etdDate;
+    const chipClass = isFinished ? 'done' : (isInProgress ? 'progress' : v._class);
+    const chipLabel = isFinished ? 'Terminado' : (isInProgress ? 'En proceso' : (statusLabel[v._class]||''));
     const editBtns = editMode ? `<div class="card-actions">
         <button type="button" class="edit" data-site="${siteKey}" data-n="${v.n}" title="Editar">✎</button>
         <button type="button" class="del" data-site="${siteKey}" data-n="${v.n}" title="Eliminar">✕</button>
