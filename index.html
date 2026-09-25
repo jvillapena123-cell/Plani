@@ -364,7 +364,9 @@
       <div class="tab" data-site="sur">Sitio Sur</div>
     </div>
     <div class="filters">
+      <button class="btn-today" id="btnPrevMonth" title="Mes anterior" style="padding:9px 12px;">‹</button>
       <select id="monthSelect"></select>
+      <button class="btn-today" id="btnNextMonth" title="Mes siguiente" style="padding:9px 12px;">›</button>
       <select id="spanSelect">
         <option value="1">1 mes</option>
         <option value="2">2 meses</option>
@@ -595,6 +597,17 @@ document.getElementById('siteTabs').addEventListener('click', e=>{
 document.querySelector('#siteTabs .tab[data-site="ambos"]').classList.add('active');
 
 monthSelect.addEventListener('change', render);
+
+function stepMonth(delta){
+  if(monthSelect.value === 'all') return; // no adjacent month when viewing everything
+  const idx = monthSelect.selectedIndex + delta;
+  if(idx >= 1 && idx < monthSelect.options.length){ // skip index 0 ("TODOS LOS MESES")
+    monthSelect.selectedIndex = idx;
+    render();
+  }
+}
+document.getElementById('btnPrevMonth').addEventListener('click', ()=> stepMonth(-1));
+document.getElementById('btnNextMonth').addEventListener('click', ()=> stepMonth(1));
 document.getElementById('spanSelect').addEventListener('change', render);
 document.getElementById('btnToday').addEventListener('click', ()=>{
   let idx = months.findIndex(({y,m})=> y===today.getFullYear() && m===today.getMonth());
