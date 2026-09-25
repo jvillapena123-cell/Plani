@@ -725,7 +725,6 @@ function buildSite(container, siteKey, siteLabel, vessels, rangeStart, rangeEnd,
 
   const editMode = !!window.__editMode;
   const nRows = Math.max(relevant.length, 1);
-  const dayColMin = isAll ? '28px' : '36px';
   const grid = el.querySelector(`#grid-${siteKey}`);
   const LEFT_COLS = getLeftCols();
   const LEFT_OFFSETS = computeOffsets(LEFT_COLS);
@@ -733,6 +732,13 @@ function buildSite(container, siteKey, siteLabel, vessels, rangeStart, rangeEnd,
   LEFT_OFFSETS[LEFT_COLS.length] = LEFT_TOTAL_WIDTH; // offset for the trailing actions column (edit mode)
   const leftColsTemplate = LEFT_COLS.map(c=>c.width+'px').join(' ') + (editMode ? ` ${ACTIONS_COL_WIDTH}px` : '');
   const totalLeftWidth = LEFT_TOTAL_WIDTH + (editMode ? ACTIONS_COL_WIDTH : 0);
+
+  // Size day columns so roughly 20 are visible at once without scrolling, on the screen's actual width,
+  // instead of a fixed pixel guess that shows a different number of days on every screen size.
+  const VISIBLE_DAYS_TARGET = 20;
+  const availableWidth = Math.max(el.clientWidth - totalLeftWidth, 0);
+  const dayColPx = Math.min(60, Math.max(isAll ? 22 : 26, Math.floor(availableWidth / VISIBLE_DAYS_TARGET)));
+  const dayColMin = dayColPx + 'px';
   grid.style.gridTemplateColumns = `${leftColsTemplate} repeat(${totalDays}, minmax(${dayColMin}, 1fr))`;
   grid.style.gridTemplateRows = `28px 40px repeat(${nRows}, 34px)`;
   grid.style.position = 'relative';
