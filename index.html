@@ -327,6 +327,74 @@
     .left-cell, .daycell-head, .daycell{ position:static !important; }
     button.edit[data-n], button.del[data-n]{ display:none !important; }
   }
+
+  /* ---------- Panel inferior de clima ---------- */
+  body{ padding-bottom:56px; }
+  body.wx-open{ padding-bottom:calc(72vh + 50px); }
+  .wx-dock{position:fixed;left:0;right:0;bottom:0;z-index:60;background:#FFFFFF;
+    border-top:2px solid var(--teal);box-shadow:0 -6px 24px rgba(18,38,66,.12);
+    padding-bottom:env(safe-area-inset-bottom,0px);font-size:12.5px;}
+  .wx-bar{display:flex;align-items:center;gap:14px;padding:8px 18px;min-height:46px;cursor:pointer;flex-wrap:wrap;user-select:none;}
+  .wx-title{display:flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:11px;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--teal);font-weight:600;white-space:nowrap;}
+  .wx-now{display:flex;align-items:center;gap:8px;color:var(--text);white-space:nowrap;}
+  .wx-now b{font-size:15px;}
+  .wx-chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:11.5px;
+    background:var(--panel-2);color:var(--text-dim);white-space:nowrap;}
+  .wx-chip.warn{background:var(--brand-orange-dim);color:#B4501F;font-weight:600;}
+  .wx-chip.stale{background:var(--red-dim);color:var(--red);font-weight:600;}
+  .wx-spacer{flex:1;}
+  .wx-btn{font-family:inherit;font-size:11.5px;font-weight:600;border-radius:7px;padding:5px 11px;cursor:pointer;
+    border:1px solid var(--border-soft);background:#fff;color:var(--teal);text-decoration:none;white-space:nowrap;}
+  .wx-btn:hover{border-color:var(--teal);}
+  .wx-btn.primary{background:var(--brand-orange);border-color:var(--brand-orange);color:#fff;}
+  .wx-chev{width:22px;height:22px;display:grid;place-items:center;color:var(--teal);transition:transform .2s;}
+  .wx-dock.open .wx-chev{transform:rotate(180deg);}
+  .wx-body{display:none;border-top:1px solid var(--border);max-height:72vh;overflow-y:auto;}
+  .wx-sec{padding:10px 18px 4px;}
+  .wx-sec h4{margin:0 0 8px;font-size:11px;font-family:'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);font-weight:600;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;}
+  .wx-sec h4 small{font-family:'IBM Plex Sans',sans-serif;letter-spacing:0;text-transform:none;color:var(--text-faint);font-weight:400;font-size:11px;}
+  .wx-days{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;}
+  .wx-day{border:1px solid var(--border);border-radius:10px;padding:8px 10px;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;background:#fff;}
+  .wx-day.today{border-color:var(--today);box-shadow:0 0 0 1px var(--today) inset;}
+  .wx-day.warn{background:linear-gradient(0deg,rgba(250,137,95,.07),rgba(250,137,95,.07)),#fff;}
+  .wx-day .dname{grid-column:1/-1;font-weight:600;font-size:12.5px;color:var(--text);display:flex;justify-content:space-between;}
+  .wx-day .dname span{color:var(--text-faint);font-weight:500;font-size:11px;}
+  .wx-day .ico{grid-row:span 2;}
+  .wx-day .tt{font-size:15px;font-weight:700;color:var(--text);} .wx-day .tt small{font-weight:500;color:var(--text-faint);font-size:12px;}
+  .wx-day .rr{font-size:11px;color:#1E5FBF;}
+  .wx-day .kv{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+  .wx-day .kv span{font-size:11px;border-radius:6px;padding:2px 6px;color:#122642;font-weight:600;}
+  .wx-wave-scroll{overflow-x:auto;}
+  .wx-wave-scroll svg text{font-family:'IBM Plex Sans',system-ui,sans-serif;}
+  .wx-dock.open .wx-body{display:block;}
+  .wx-scroll{overflow-x:auto;padding:0 18px 10px;}
+  table.wx{border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums;}
+  table.wx th, table.wx td{text-align:center;padding:3px 0;min-width:40px;}
+  table.wx .lab{position:sticky;left:0;z-index:2;background:#fff;text-align:right;padding-right:10px;
+    color:var(--text-dim);font-weight:500;font-size:11px;white-space:nowrap;min-width:92px;}
+  table.wx tr td.lab.lab, table.wx tr th.lab.lab{font-weight:500;font-size:11px;color:var(--text-dim);background:#fff;}
+  table.wx .lab small{color:var(--text-faint);font-family:'IBM Plex Mono',monospace;margin-left:4px;}
+  table.wx tr.days th{font-size:12.5px;font-weight:600;color:var(--text);text-align:left;padding:8px 0 4px 8px;border-left:1px solid var(--border);}
+  table.wx tr.days th.lab{border-left:none;}
+  table.wx td.d0{border-left:1px solid var(--border);}
+  table.wx tr.hrs td{color:var(--text-faint);font-family:'IBM Plex Mono',monospace;font-size:11px;}
+  table.wx td.night{background:rgba(29,62,136,.045);}
+  table.wx tr.tmp td{font-weight:600;font-size:13px;color:var(--text);}
+  table.wx tr.fl td{color:var(--text-faint);font-size:11.5px;}
+  table.wx tr.rain td{color:#1E5FBF;font-size:11px;font-weight:500;}
+  table.wx tr.wind td.v, table.wx tr.gust td.v{font-weight:600;color:#122642;}
+  table.wx tr.gust td.v{font-size:11px;}
+  table.wx td.past{opacity:.38;}
+  table.wx td.now{box-shadow:inset 2px 0 0 var(--today), inset -2px 0 0 var(--today);}
+  table.wx tr.hrs td.now{color:#fff;background:var(--today);border-radius:6px 6px 0 0;font-weight:600;}
+  table.wx tr.dir svg{display:block;margin:0 auto;}
+  .wx-foot{display:flex;gap:14px;flex-wrap:wrap;align-items:center;padding:0 18px 10px;color:var(--text-faint);font-size:11px;}
+  .wx-foot .sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px;}
+  .wx-msg{padding:0 18px 8px;font-size:12px;}
+  .wx-msg.err{color:var(--red);} .wx-msg.ok{color:var(--green);}
+  @media (max-width:720px){ .wx-dock .wx-hide-sm{display:none !important;} .wx-bar{gap:6px 8px;padding:8px 12px;} .wx-chip{white-space:normal;} body{padding-bottom:96px;} }
+  @media print{ .wx-dock{display:none !important;} body, body.wx-open{padding-bottom:0;} }
 </style>
 </head>
 <body>
@@ -476,6 +544,15 @@
   </div>
 </div>
 
+<div class="wx-dock" id="wxDock" aria-label="Pronóstico del tiempo">
+  <div class="wx-bar" id="wxBar"></div>
+  <div class="wx-body" id="wxBody"></div>
+</div>
+
+<script>
+const WEATHER_DATA = {"source":"Windy","location":"Bahía San Vicente","captured":"2026-10-05","slots":[{"t":"2026-10-05T00:00","ic":"nc","tmp":13,"fl":11,"rain":null,"w":5,"g":9,"dir":30},{"t":"2026-10-05T03:00","ic":"nc","tmp":11,"fl":9,"rain":null,"w":5,"g":8,"dir":45},{"t":"2026-10-05T06:00","ic":"nc","tmp":11,"fl":8,"rain":null,"w":6,"g":7,"dir":90},{"t":"2026-10-05T09:00","ic":"sc","tmp":11,"fl":9,"rain":null,"w":5,"g":8,"dir":90},{"t":"2026-10-05T12:00","ic":"sc","tmp":15,"fl":12,"rain":null,"w":5,"g":7,"dir":40},{"t":"2026-10-05T15:00","ic":"cl","tmp":16,"fl":13,"rain":null,"w":7,"g":9,"dir":35},{"t":"2026-10-05T18:00","ic":"rn","tmp":14,"fl":11,"rain":0.2,"w":9,"g":11,"dir":30},{"t":"2026-10-05T21:00","ic":"nr","tmp":13,"fl":9,"rain":1.7,"w":10,"g":10,"dir":30},{"t":"2026-10-06T00:00","ic":"nr","tmp":12,"fl":9,"rain":2.9,"w":11,"g":16,"dir":40},{"t":"2026-10-06T03:00","ic":"nr","tmp":12,"fl":9,"rain":6,"w":11,"g":15,"dir":45},{"t":"2026-10-06T06:00","ic":"nr","tmp":12,"fl":8,"rain":6,"w":10,"g":20,"dir":50},{"t":"2026-10-06T09:00","ic":"rn","tmp":12,"fl":9,"rain":3.3,"w":11,"g":20,"dir":25},{"t":"2026-10-06T12:00","ic":"rn","tmp":14,"fl":10,"rain":4.5,"w":12,"g":25,"dir":0},{"t":"2026-10-06T15:00","ic":"rn","tmp":16,"fl":12,"rain":1.8,"w":12,"g":25,"dir":0},{"t":"2026-10-06T18:00","ic":"sc","tmp":15,"fl":12,"rain":null,"w":12,"g":23,"dir":0},{"t":"2026-10-06T21:00","ic":"nr","tmp":15,"fl":11,"rain":0.3,"w":11,"g":19,"dir":15},{"t":"2026-10-07T00:00","ic":"nr","tmp":14,"fl":11,"rain":null,"w":10,"g":18,"dir":45},{"t":"2026-10-07T03:00","ic":"nr","tmp":14,"fl":11,"rain":2,"w":10,"g":18,"dir":40},{"t":"2026-10-07T06:00","ic":"nr","tmp":13,"fl":10,"rain":1.4,"w":8,"g":16,"dir":30},{"t":"2026-10-07T09:00","ic":"rn","tmp":13,"fl":11,"rain":1.3,"w":8,"g":9,"dir":15},{"t":"2026-10-07T12:00","ic":"rn","tmp":15,"fl":13,"rain":2.1,"w":9,"g":10,"dir":0},{"t":"2026-10-07T15:00","ic":"rn","tmp":17,"fl":14,"rain":1.1,"w":9,"g":14,"dir":0},{"t":"2026-10-07T18:00","ic":"sc","tmp":16,"fl":13,"rain":null,"w":8,"g":15,"dir":0},{"t":"2026-10-07T21:00","ic":"nr","tmp":14,"fl":13,"rain":0.3,"w":6,"g":13,"dir":0},{"t":"2026-10-08T00:00","ic":"nr","tmp":13,"fl":12,"rain":0.6,"w":5,"g":7,"dir":45},{"t":"2026-10-08T03:00","ic":"nr","tmp":12,"fl":11,"rain":0.2,"w":5,"g":6,"dir":45},{"t":"2026-10-08T06:00","ic":"nc","tmp":11,"fl":10,"rain":null,"w":5,"g":8,"dir":60},{"t":"2026-10-08T09:00","ic":"sr","tmp":12,"fl":11,"rain":null,"w":5,"g":8,"dir":90},{"t":"2026-10-08T12:00","ic":"sc","tmp":15,"fl":14,"rain":null,"w":5,"g":9,"dir":0},{"t":"2026-10-08T15:00","ic":"sc","tmp":17,"fl":15,"rain":null,"w":7,"g":11,"dir":315},{"t":"2026-10-08T18:00","ic":"sun","tmp":15,"fl":13,"rain":null,"w":7,"g":10,"dir":315},{"t":"2026-10-08T21:00","ic":"nc","tmp":13,"fl":12,"rain":null,"w":4,"g":8,"dir":345},{"t":"2026-10-09T00:00","ic":"nc","tmp":12,"fl":11,"rain":null,"w":4,"g":6,"dir":45},{"t":"2026-10-09T03:00","ic":"nc","tmp":11,"fl":10,"rain":null,"w":4,"g":6,"dir":70},{"t":"2026-10-09T06:00","ic":"nc","tmp":10,"fl":9,"rain":null,"w":4,"g":7,"dir":60},{"t":"2026-10-09T09:00","ic":"sc","tmp":12,"fl":10,"rain":null,"w":5,"g":8,"dir":50},{"t":"2026-10-09T12:00","ic":"sc","tmp":15,"fl":13,"rain":null,"w":7,"g":10,"dir":0},{"t":"2026-10-09T15:00","ic":"sr","tmp":16,"fl":14,"rain":0.3,"w":9,"g":13,"dir":345},{"t":"2026-10-09T18:00","ic":"sr","tmp":16,"fl":13,"rain":null,"w":8,"g":11,"dir":345},{"t":"2026-10-09T21:00","ic":"nc","tmp":13,"fl":12,"rain":null,"w":4,"g":7,"dir":350}],"waves":{"source":"tide-forecast.com · Talcahuano","issued":"2026-10-05T14:00","points":[{"t":"2026-10-05T15:00","h":1.3,"dir":"WSW","p":11},{"t":"2026-10-05T21:00","h":1.9,"dir":"NW","p":6},{"t":"2026-10-06T09:00","h":2.5,"dir":"NNW","p":8},{"t":"2026-10-06T15:00","h":2.1,"dir":"NNW","p":8},{"t":"2026-10-06T21:00","h":2.2,"dir":"NNW","p":7},{"t":"2026-10-07T09:00","h":1.8,"dir":"W","p":11},{"t":"2026-10-07T15:00","h":1.9,"dir":"N","p":6},{"t":"2026-10-07T21:00","h":1.3,"dir":"WSW","p":15},{"t":"2026-10-08T09:00","h":1.1,"dir":"SW","p":14},{"t":"2026-10-08T15:00","h":1.0,"dir":"WSW","p":14},{"t":"2026-10-08T21:00","h":0.9,"dir":"WSW","p":13},{"t":"2026-10-09T09:00","h":0.9,"dir":"WSW","p":12},{"t":"2026-10-09T15:00","h":1.0,"dir":"WSW","p":12},{"t":"2026-10-09T21:00","h":1.0,"dir":"WSW","p":14}]}};
+/*WX_END*/
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
@@ -1496,6 +1573,389 @@ window.addEventListener('resize', ()=>{
     }, (err)=>{ console.error('Error de sincronización con Firestore', err); });
   }
 })();
+
+
+// ---------- Panel inferior de clima (pronóstico Windy, franjas de 3 h) ----------
+let WX = WEATHER_DATA;
+const WX_GUST_ALERT_KT = 20;   // umbral de referencia para destacar rachas; ajustar según criterio operacional
+const WX_WINDY_URL = 'https://www.windy.com/-36.730/-73.140?-36.730,-73.140,11';
+const WX_DAYS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const WX_DOW3 = ['dom','lun','mar','mié','jue','vie','sáb'];
+let wxOpen = false;
+try{ wxOpen = sessionStorage.getItem('wxOpen') === '1'; }catch(e){}
+
+function wxDate(s){ const [d,t] = s.split('T'); const [y,m,dd] = d.split('-').map(Number); const h = Number((t||'0').split(':')[0]); return new Date(y, m-1, dd, h); }
+function wxColor(kt){
+  if(kt==null) return 'transparent';
+  if(kt<5) return '#EEF2F6'; if(kt<7) return '#C4ECFA'; if(kt<9) return '#7FD8F3';
+  if(kt<11) return '#4FD6B0'; if(kt<14) return '#2FCB5E'; if(kt<17) return '#9BD83A';
+  if(kt<20) return '#F2C81B'; if(kt<23) return '#F6A019'; if(kt<26) return '#F7741D'; return '#E5484D';
+}
+function wxArrow(deg, size){
+  // deg = dirección DESDE donde sopla; la flecha apunta hacia donde va el viento (como Windy)
+  size = size||18;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" style="transform:rotate(${(deg+180)%360}deg)"><path d="M12 3 L18.5 12 L13.6 12 L13.6 21 L10.4 21 L10.4 12 L5.5 12 Z" fill="#4E6D93"/></svg>`;
+}
+function wxCompass(deg){ return ['N','NE','E','SE','S','SO','O','NO'][Math.round(((deg%360)+360)%360/45)%8]; }
+function wxIcon(code, size){
+  size = size||24;
+  const sun = (x,y,r)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="#F5B301"/>`+[0,45,90,135,180,225,270,315].map(a=>{const rad=a*Math.PI/180;return `<line x1="${x+Math.cos(rad)*(r+1.6)}" y1="${y+Math.sin(rad)*(r+1.6)}" x2="${x+Math.cos(rad)*(r+3.4)}" y2="${y+Math.sin(rad)*(r+3.4)}" stroke="#F5B301" stroke-width="1.4" stroke-linecap="round"/>`}).join('');
+  const moon = `<circle cx="8.5" cy="8.5" r="5.2" fill="#A9D3F0"/>`;
+  const cloud = (dy)=>`<path d="M7 ${19+dy} h11.5 a3.6 3.6 0 0 0 0-7.2 a5 5 0 0 0-9.6-1.2 A3.8 3.8 0 0 0 7 ${19+dy} z" fill="#9AA3AD"/>`;
+  const drops = `<path d="M9 22.5 l-1 2.2 M13 22.5 l-1 2.2 M17 22.5 l-1 2.2" stroke="#1E8FE0" stroke-width="1.8" stroke-linecap="round"/>`;
+  let g = '';
+  switch(code){
+    case 'sun': g = sun(12,12,5); break;
+    case 'sc': g = sun(8,8,3.6) + cloud(0); break;
+    case 'cl': g = cloud(-1); break;
+    case 'nc': g = moon + cloud(0); break;
+    case 'rn': g = cloud(-3) + drops; break;
+    case 'sr': g = sun(7.5,6.5,3.2) + cloud(-3) + drops; break;
+    case 'nr': g = moon + cloud(-3) + drops; break;
+    default: g = cloud(-1);
+  }
+  return `<svg width="${size}" height="${size}" viewBox="0 0 26 26">${g}</svg>`;
+}
+function wxFmtDay(d){ return `${WX_DOW3[d.getDay()]} ${String(d.getDate()).padStart(2,'0')}`; }
+function wxFmtHM(d){ return String(d.getHours()).padStart(2,'0')+':00'; }
+
+function wxCurrentIndex(slots){
+  const now = new Date(); let idx = -1;
+  slots.forEach((s,i)=>{ if(wxDate(s.t) <= now) idx = i; });
+  if(idx>=0 && (now - wxDate(slots[idx].t)) > 3*3600000) return -2; // pronóstico ya vencido
+  return idx;
+}
+
+function wxAlertRanges(slots, fromIdx, hours){
+  const start = Math.max(0, fromIdx);
+  const limit = new Date(Date.now() + hours*3600000);
+  const ranges = []; let cur = null;
+  for(let i=start;i<slots.length;i++){
+    const d = wxDate(slots[i].t); if(d > limit) break;
+    if((slots[i].g||0) >= WX_GUST_ALERT_KT){
+      if(cur && cur.endIdx === i-1){ cur.endIdx = i; cur.max = Math.max(cur.max, slots[i].g); }
+      else { cur = {startIdx:i, endIdx:i, max:slots[i].g}; ranges.push(cur); }
+    }
+  }
+  return ranges;
+}
+
+
+const WX_WAVE_ALERT_M = 2.0;   // altura de ola de referencia para destacar; ajustar según criterio operacional
+const WX_DIR16 = {N:0,NNE:22.5,NE:45,ENE:67.5,E:90,ESE:112.5,SE:135,SSE:157.5,S:180,SSW:202.5,SW:225,WSW:247.5,W:270,WNW:292.5,NW:315,NNW:337.5,
+  SSO:202.5,SO:225,OSO:247.5,O:270,ONO:292.5,NO:315,NNO:337.5};
+function wxWavePoints(){ return (WX && WX.waves && Array.isArray(WX.waves.points)) ? WX.waves.points : []; }
+function wxDirDeg(d){ if(typeof d==='number') return d; const k=String(d||'').toUpperCase().trim(); return (k in WX_DIR16) ? WX_DIR16[k] : null; }
+function wxWaveColor(h){ if(h<1) return '#C4ECFA'; if(h<1.5) return '#7FD8F3'; if(h<2) return '#2FCB5E'; if(h<2.5) return '#F2C81B'; if(h<3) return '#F7741D'; return '#E5484D'; }
+
+function wxDaysHtml(slots, groups){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const waves = wxWavePoints();
+  return `<div class="wx-days">` + groups.map(g=>{
+    const ss = g.idx.map(i=>slots[i]);
+    const tmax = Math.max(...ss.map(x=>x.tmp)), tmin = Math.min(...ss.map(x=>x.tmp));
+    const rain = ss.reduce((a,x)=>a+(x.rain||0),0);
+    const wmax = Math.max(...ss.map(x=>x.w)), gmax = Math.max(...ss.map(x=>x.g));
+    const mid = ss.find(x=>wxDate(x.t).getHours()===12) || ss.find(x=>{const h=wxDate(x.t).getHours(); return h>=9&&h<=15;}) || ss[0];
+    const dayRainSlots = ss.filter(x=>{const h=wxDate(x.t).getHours(); return h>=6&&h<=18 && (x.rain||0)>=0.5;}).length;
+    let ic = mid.ic;
+    if(rain>=3 || dayRainSlots>=3) ic = 'rn'; else if(rain>=0.5 && !/r$|rn/.test(ic)) ic = (ic==='sun'||ic==='sc') ? 'sr' : 'rn';
+    const wv = waves.filter(p=> wxDate(p.t).toDateString()===g.key);
+    const hmax = wv.length ? Math.max(...wv.map(p=>p.h)) : null;
+    const isToday = g.date.getTime()===today.getTime();
+    const warn = gmax>=WX_GUST_ALERT_KT || (hmax!=null && hmax>=WX_WAVE_ALERT_M);
+    return `<div class="wx-day ${isToday?'today':''} ${warn?'warn':''}">
+      <div class="dname">${WX_DAYS[g.date.getDay()]} ${g.date.getDate()}<span>${isToday?'Hoy':''}</span></div>
+      <div class="ico">${wxIcon(ic,34)}</div>
+      <div class="tt">${tmax}° <small>/ ${tmin}°</small></div>
+      <div class="rr">${rain>0? rain.toFixed(1)+' mm lluvia' : 'Sin lluvia'}</div>
+      <div class="kv">
+        <span style="background:${wxColor(wmax)}" title="Viento máximo">💨 ${wmax} kt</span>
+        <span style="background:${wxColor(gmax)}${gmax>=26?';color:#fff':''}" title="Racha máxima">Racha ${gmax} kt</span>
+        ${hmax!=null?`<span style="background:${wxWaveColor(hmax)}${hmax>=3?';color:#fff':''}" title="Altura de ola máxima">🌊 ${hmax.toFixed(1)} m</span>`:''}
+      </div></div>`;
+  }).join('') + `</div>`;
+}
+
+function wxRenderWaveChart(groups){
+  const box = document.getElementById('wxWaveBox'); if(!box) return;
+  const pts = wxWavePoints().map(p=>Object.assign({}, p, {d: wxDate(p.t)})).sort((a,b)=>a.d-b.d);
+  if(!pts.length){ box.innerHTML = '<div style="color:var(--text-faint);font-size:12px;padding:6px 0;">Sin pronóstico de oleaje cargado.</div>'; return; }
+  const start = groups.length ? new Date(groups[0].date.getFullYear(), groups[0].date.getMonth(), groups[0].date.getDate()) : new Date(pts[0].d.getFullYear(), pts[0].d.getMonth(), pts[0].d.getDate());
+  const lastG = groups.length ? groups[groups.length-1].date : pts[pts.length-1].d;
+  const end = new Date(lastG.getFullYear(), lastG.getMonth(), lastG.getDate()+1);
+  const vis = pts.filter(p=>p.d>=start && p.d<=end);
+  const W = Math.max(720, box.clientWidth || 900), H = 200;
+  const step = Math.max(1, Math.ceil(vis.length/20));
+  const L = 40, R = 14, T = 22, B = 46;
+  const maxH = Math.max(3, Math.ceil((Math.max(...vis.map(p=>p.h), 0) + 0.4) * 2) / 2);
+  const x = d => L + (d - start) / (end - start) * (W - L - R);
+  const y = h => T + (1 - h / maxH) * (H - T - B);
+  let g = '';
+  // grilla horizontal
+  for(let v=0; v<=maxH+1e-9; v+=0.5){
+    g += `<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="${v===0?'#C9D3DF':'#EEF2F6'}"/>`;
+    if(Math.abs(v%1)<1e-9 || maxH<=3) g += `<text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="10" fill="#93A2B4">${v.toFixed(1)}</text>`;
+  }
+  g += `<text x="10" y="${T-8}" font-size="10" fill="#93A2B4">m</text>`;
+  // días y noches
+  for(let d=new Date(start); d<end; d=new Date(d.getFullYear(), d.getMonth(), d.getDate()+1)){
+    const n0 = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0), n1 = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 7);
+    const e0 = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 20), e1 = new Date(d.getFullYear(), d.getMonth(), d.getDate()+1, 0);
+    g += `<rect x="${x(n0)}" y="${T}" width="${x(n1)-x(n0)}" height="${H-T-B}" fill="rgba(29,62,136,.045)"/>`;
+    g += `<rect x="${x(e0)}" y="${T}" width="${x(e1)-x(e0)}" height="${H-T-B}" fill="rgba(29,62,136,.045)"/>`;
+    g += `<line x1="${x(d)}" x2="${x(d)}" y1="${T-14}" y2="${H-B+40}" stroke="#E3E9F0"/>`;
+    g += `<text x="${x(d)+6}" y="${T-8}" font-size="11" font-weight="600" fill="#122642">${WX_DAYS[d.getDay()]} ${d.getDate()}</text>`;
+  }
+  // umbral de referencia
+  if(WX_WAVE_ALERT_M < maxH){
+    g += `<line x1="${L}" x2="${W-R}" y1="${y(WX_WAVE_ALERT_M)}" y2="${y(WX_WAVE_ALERT_M)}" stroke="#FA895F" stroke-dasharray="5 4" stroke-width="1.3"/>`;
+    g += `<text x="${W-R-4}" y="${y(WX_WAVE_ALERT_M)-4}" text-anchor="end" font-size="10" fill="#B4501F">Ref. ${WX_WAVE_ALERT_M.toFixed(1)} m</text>`;
+  }
+  // área y línea (curva suave)
+  const P = vis.map(p=>[x(p.d), y(p.h)]);
+  const path = P.map((pt,i)=>{
+    if(i===0) return `M${pt[0]},${pt[1]}`;
+    const p0 = P[i-1], cx = (p0[0]+pt[0])/2;
+    return `C${cx},${p0[1]} ${cx},${pt[1]} ${pt[0]},${pt[1]}`;
+  }).join(' ');
+  g += `<defs><linearGradient id="wxWaveGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1D3E88" stop-opacity=".32"/><stop offset="1" stop-color="#1D3E88" stop-opacity=".03"/></linearGradient></defs>`;
+  if(P.length>1) g += `<path d="${path} L${P[P.length-1][0]},${y(0)} L${P[0][0]},${y(0)} Z" fill="url(#wxWaveGrad)"/>`;
+  g += `<path d="${path}" fill="none" stroke="#1D3E88" stroke-width="2.2"/>`;
+  // ahora
+  const now = new Date();
+  if(now>=start && now<=end){
+    g += `<line x1="${x(now)}" x2="${x(now)}" y1="${T}" y2="${H-B}" stroke="#FA895F" stroke-width="2"/>`;
+    g += `<text x="${x(now)}" y="${H-B+12}" text-anchor="middle" font-size="9.5" font-weight="700" fill="#FA895F">AHORA</text>`;
+  }
+  // puntos, etiquetas, dirección y período
+  vis.forEach((p,idx)=>{
+    const px = x(p.d), py = y(p.h), deg = wxDirDeg(p.dir);
+    if(idx % step){ g += `<circle cx="${px}" cy="${py}" r="2.2" fill="#1D3E88"/>`; return; }
+    g += `<circle cx="${px}" cy="${py}" r="4.2" fill="${wxWaveColor(p.h)}" stroke="#1D3E88" stroke-width="1.5"/>`;
+    g += `<text x="${px}" y="${py-9}" text-anchor="middle" font-size="11" font-weight="700" fill="#122642">${p.h.toFixed(1)}</text>`;
+    if(deg!=null) g += `<g transform="translate(${px},${H-B+24}) rotate(${(deg+180)%360})"><path d="M0,-8 L5.5,0 L1.6,0 L1.6,8 L-1.6,8 L-1.6,0 L-5.5,0 Z" fill="#4E6D93"/></g>`;
+    g += `<text x="${px}" y="${H-B+42}" text-anchor="middle" font-size="9.5" fill="#5B6E85">${esc(typeof p.dir==='number' ? wxCompass16(p.dir) : (p.dir||''))}${p.p?' · '+p.p+'s':''}</text>`;
+  });
+  box.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Gráfico de altura de ola">${g}</svg>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--text-faint);padding:2px 0 6px;">
+      <span>Altura significativa de ola (m) · flecha: hacia dónde avanza el oleaje · texto: dirección de origen y período</span>
+      <span>${vis.length>16?'Etiquetas cada '+(step*3)+' h':'Puntos: mañana · tarde · noche'}</span>
+    </div>`;
+}
+
+let wxResizeT = null;
+window.addEventListener('resize', ()=>{ clearTimeout(wxResizeT); wxResizeT = setTimeout(()=>{ if(wxOpen) renderWeather(); }, 250); });
+
+function renderWeather(){
+  const dock = document.getElementById('wxDock');
+  const bar = document.getElementById('wxBar');
+  const body = document.getElementById('wxBody');
+  if(!dock) return;
+  dock.classList.toggle('open', wxOpen);
+  document.body.classList.toggle('wx-open', wxOpen);
+  const slots = (WX && Array.isArray(WX.slots)) ? WX.slots : [];
+  const loc = esc(WX && WX.location || 'Bahía San Vicente');
+  const cap = WX && WX.captured ? wxDate(WX.captured+'T00:00') : null;
+  const capTxt = cap ? fmtShort(cap) : '—';
+  const editBtns = `<button class="wx-btn" id="wxRefreshBtn" type="button">↻ Actualizar</button>`;
+
+  if(!slots.length){
+    bar.innerHTML = `<span class="wx-title">${wxIcon('cl',18)} Clima · ${loc}</span><span class="wx-chip">Sin pronóstico cargado</span><span class="wx-spacer"></span>${editBtns}<a class="wx-btn" href="${WX_WINDY_URL}" target="_blank" rel="noopener">Abrir Windy ↗</a>`;
+    body.innerHTML = ''; wxBindButtons(); return;
+  }
+
+  const ci = wxCurrentIndex(slots);
+  const stale = ci === -2;
+  const nowSlot = ci >= 0 ? slots[ci] : (stale ? null : slots[0]);
+  const next24 = slots.filter(s=>{ const d=wxDate(s.t); return d>=new Date(Date.now()-3*3600000) && d<=new Date(Date.now()+24*3600000); });
+  const maxG24 = next24.length ? Math.max(...next24.map(s=>s.g||0)) : null;
+  const rain24 = next24.reduce((a,s)=>a+(s.rain||0),0);
+  const alerts = stale ? [] : wxAlertRanges(slots, ci, 48);
+
+  let nowHtml = '';
+  if(nowSlot){
+    nowHtml = `<span class="wx-now">${wxIcon(nowSlot.ic,24)}<b>${nowSlot.tmp}°</b>
+      <span>${wxArrow(nowSlot.dir,14)}</span><span>${nowSlot.w} kt ${wxCompass(nowSlot.dir)}</span>
+      <span class="wx-hide-sm" style="color:var(--text-dim)">racha ${nowSlot.g} kt</span></span>`;
+  }
+  let chips = '';
+  if(wxLiveError) chips += `<span class="wx-chip stale" title="${esc(wxLiveError)}">Sin conexión con la fuente · mostrando último dato</span>`;
+  if(stale){
+    chips += `<span class="wx-chip stale">Pronóstico desactualizado (captura ${capTxt})</span>`;
+  } else {
+    if(maxG24!=null) chips += `<span class="wx-chip wx-hide-sm">Racha máx. 24 h: <b style="color:var(--text)">${maxG24} kt</b></span>`;
+    if(rain24>0) chips += `<span class="wx-chip wx-hide-sm">Lluvia 24 h: <b style="color:var(--text)">${rain24.toFixed(1)} mm</b></span>`;
+    const wv48 = wxWavePoints().filter(p=>{ const d=wxDate(p.t); return d>=new Date(Date.now()-6*3600000) && d<=new Date(Date.now()+48*3600000); });
+    if(wv48.length){ const mx = Math.max(...wv48.map(p=>p.h)); chips += `<span class="wx-chip ${mx>=WX_WAVE_ALERT_M?'warn':''}">Ola máx. 48 h: <b style="color:${mx>=WX_WAVE_ALERT_M?'#B4501F':'var(--text)'}">${mx.toFixed(1)} m</b></span>`; }
+    if(alerts.length){
+      const a = alerts[0], s = wxDate(slots[a.startIdx].t), e = new Date(wxDate(slots[a.endIdx].t).getTime()+3*3600000);
+      const more = alerts.length>1 ? ` (+${alerts.length-1})` : '';
+      chips += `<span class="wx-chip warn">⚠ Rachas ≥ ${WX_GUST_ALERT_KT} kt: ${wxFmtDay(s)} ${wxFmtHM(s)} → ${wxFmtDay(e)} ${wxFmtHM(e)}, máx ${a.max} kt${more}</span>`;
+    }
+  }
+  bar.innerHTML = `<span class="wx-title">${wxIcon('sc',18)} Clima · ${loc}</span>${nowHtml}${chips}
+    <span class="wx-spacer"></span>
+    <span class="wx-chev"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 15l6-6 6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
+
+  // ----- tabla completa -----
+  const groups = [];
+  slots.forEach((s,i)=>{
+    const d = wxDate(s.t); const key = d.toDateString();
+    let g = groups[groups.length-1];
+    if(!g || g.key!==key){ g = {key, date:d, idx:[]}; groups.push(g); }
+    g.idx.push(i);
+  });
+  const cls = (i, extra)=>{
+    const d = wxDate(slots[i].t), h = d.getHours();
+    const c = [];
+    if(groups.some(g=>g.idx[0]===i)) c.push('d0');
+    if(h<7 || h>=20) c.push('night');
+    if(ci>=0 && i<ci) c.push('past');
+    if(i===ci) c.push('now');
+    if(extra) c.push(extra);
+    return c.join(' ');
+  };
+  const row = (trCls, label, cellFn)=> `<tr class="${trCls}"><td class="lab">${label}</td>${slots.map((s,i)=>cellFn(s,i)).join('')}</tr>`;
+  let t = `<table class="wx"><tr class="days"><th class="lab"></th>${groups.map(g=>`<th colspan="${g.idx.length}">${WX_DAYS[g.date.getDay()]} ${g.date.getDate()}</th>`).join('')}</tr>`;
+  t += row('hrs','Hora', (s,i)=>`<td class="${cls(i)}">${wxDate(s.t).getHours()}</td>`);
+  t += row('ico','', (s,i)=>`<td class="${cls(i)}">${wxIcon(s.ic,26)}</td>`);
+  t += row('tmp','Temperatura<small>°C</small>', (s,i)=>`<td class="${cls(i)}">${s.tmp}°</td>`);
+  t += row('fl','Sens. térmica<small>°C</small>', (s,i)=>`<td class="${cls(i)}">${s.fl!=null? s.fl+'°':''}</td>`);
+  t += row('rain','Lluvia<small>mm</small>', (s,i)=>`<td class="${cls(i)}">${s.rain? s.rain:''}</td>`);
+  t += row('wind','Viento<small>kt</small>', (s,i)=>`<td class="${cls(i,'v')}" style="background:${wxColor(s.w)}">${s.w}</td>`);
+  t += row('gust','Rachas<small>kt</small>', (s,i)=>`<td class="${cls(i,'v')}" style="background:${wxColor(s.g)}${s.g>=26?';color:#fff':''}">${s.g}</td>`);
+  t += row('dir','Dirección', (s,i)=>`<td class="${cls(i)}" title="Desde ${wxCompass(s.dir)} (${s.dir}°)">${wxArrow(s.dir,18)}</td>`);
+  t += `</table>`;
+
+  const legend = [[3,'<5'],[6,'5–6'],[8,'7–8'],[10,'9–10'],[12,'11–13'],[15,'14–16'],[18,'17–19'],[21,'20–22'],[24,'23–25'],[27,'26+']]
+    .map(([v,l])=>`<span><span class="sw" style="background:${wxColor(v)}"></span>${l}</span>`).join('');
+  body.innerHTML = `<div class="wx-sec"><h4>Pronóstico 5 días <small>${loc} · ${esc(WX.source||'')}</small></h4>${wxDaysHtml(slots, groups)}</div>
+    <div class="wx-sec"><h4>Altura de ola <small>${esc((WX.waves&&WX.waves.source)||'')}${WX.waves&&WX.waves.issued?' · emitido '+fmtShort(wxDate(WX.waves.issued))+' '+wxFmtHM(wxDate(WX.waves.issued)):''} · aguas abiertas frente a la costa</small></h4>
+      <div class="wx-wave-scroll" id="wxWaveBox"></div></div>
+    <div class="wx-sec" style="padding-bottom:0;"><h4>Detalle cada 3 horas</h4></div>
+    <div class="wx-scroll">${t}</div>
+    <div class="wx-msg" id="wxMsg" style="display:none;"></div>
+    <div class="wx-foot">
+      <span>Fuente: ${esc(WX.source||'Windy')} · ${WX.updatedAt ? 'actualizado '+fmtShort(new Date(WX.updatedAt))+' '+new Date(WX.updatedAt).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'}) : 'captura '+capTxt} · franjas de 3 h · flechas indican hacia dónde sopla el viento</span>
+      <span style="display:flex;gap:8px;flex-wrap:wrap;">${legend} kt</span>
+      <span class="wx-spacer"></span>
+      ${editBtns}
+      <a class="wx-btn" href="${WX_WINDY_URL}" target="_blank" rel="noopener">Abrir Windy ↗</a>
+    </div>`;
+  wxBindButtons();
+  if(wxOpen) wxRenderWaveChart(groups);
+  // centra la franja actual al abrir
+  if(wxOpen && ci>=0){
+    const sc = body.querySelector('.wx-scroll');
+    const g = groups.find(gr=>gr.idx.includes(ci));
+    const cells = body.querySelectorAll('tr.hrs td:not(.lab)');
+    const first = g ? cells[g.idx[0]] : null, lab = body.querySelector('tr.hrs td.lab');
+    if(sc && first) sc.scrollLeft = Math.max(0, first.offsetLeft - (lab ? lab.offsetWidth : 0));
+  }
+}
+
+function wxSetMsg(text, kind){
+  const m = document.getElementById('wxMsg'); if(!m) return;
+  m.style.display = text ? 'block' : 'none';
+  m.className = 'wx-msg ' + (kind||'');
+  m.textContent = text || '';
+}
+
+function wxBindButtons(){
+  const b = document.getElementById('wxRefreshBtn');
+  if(b) b.onclick = (ev)=>{ ev.stopPropagation(); wxLoadLive(true); };
+  document.querySelectorAll('#wxDock a.wx-btn').forEach(a=> a.onclick = ev=>ev.stopPropagation());
+}
+
+document.getElementById('wxBar').addEventListener('click', ()=>{
+  wxOpen = !wxOpen;
+  try{ sessionStorage.setItem('wxOpen', wxOpen?'1':'0'); }catch(e){}
+  renderWeather();
+});
+document.getElementById('btnEditMode').addEventListener('click', ()=> setTimeout(renderWeather, 0));
+
+
+// ----- Datos en vivo: Open-Meteo (pronóstico + oleaje), sin clave de API -----
+const WX_LAT = -36.73, WX_LON = -73.14;                       // Bahía San Vicente
+const WX_MARINE_POINTS = [[-36.72,-73.20],[-36.70,-73.28],[-36.66,-73.36]]; // frente a la bahía (se usa el primero con datos)
+const WX_CACHE_KEY = 'htp_wx_cache_v1';
+const WX_REFRESH_MIN = 30;
+let wxLiveError = null, wxLoading = false;
+
+function wxCompass16(deg){ return ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSO','SO','OSO','O','ONO','NO','NNO'][Math.round((((deg%360)+360)%360)/22.5)%16]; }
+function wxIconFromCode(c, day){
+  if(c==null) return 'cl';
+  if(c>=51 || c===95 || c===96 || c===99) return day ? ((c>=80&&c<=82) ? 'sr' : 'rn') : 'nr';
+  if(c===0 || c===1) return day ? 'sun' : 'nc';
+  if(c===2) return day ? 'sc' : 'nc';
+  return 'cl'; // 3 nublado, 45/48 niebla
+}
+async function wxFetchJson(url){
+  const ctl = new AbortController(); const tm = setTimeout(()=>ctl.abort(), 15000);
+  try{ const r = await fetch(url, {signal: ctl.signal}); if(!r.ok) throw new Error('HTTP '+r.status); return await r.json(); }
+  finally{ clearTimeout(tm); }
+}
+async function wxLoadLive(manual){
+  if(wxLoading) return; wxLoading = true;
+  const btn = document.getElementById('wxRefreshBtn'); if(btn){ btn.disabled = true; btn.textContent = 'Actualizando…'; }
+  try{
+    const fUrl = `https://api.open-meteo.com/v1/forecast?latitude=${WX_LAT}&longitude=${WX_LON}`
+      + `&hourly=temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,is_day`
+      + `&wind_speed_unit=kn&timezone=America%2FSantiago&forecast_days=5`;
+    const f = await wxFetchJson(fUrl); const H = f.hourly;
+    const slots = [];
+    for(let i=0;i<H.time.length;i++){
+      const hr = Number(H.time[i].slice(11,13)); if(hr % 3) continue;
+      const rng = [i,i+1,i+2].filter(k=>k<H.time.length);
+      const rain = rng.reduce((a,k)=>a+(H.precipitation[k]||0),0);
+      slots.push({ t: H.time[i].slice(0,16), ic: wxIconFromCode(H.weather_code[i], H.is_day[i]===1),
+        tmp: Math.round(H.temperature_2m[i]), fl: H.apparent_temperature[i]==null ? null : Math.round(H.apparent_temperature[i]),
+        rain: rain>=0.1 ? Math.round(rain*10)/10 : null,
+        w: Math.round(H.wind_speed_10m[i]||0), g: Math.round(Math.max(...rng.map(k=>H.wind_gusts_10m[k]||0))),
+        dir: Math.round(H.wind_direction_10m[i]||0) });
+    }
+    if(slots.length < 8) throw new Error('Respuesta de pronóstico incompleta');
+
+    let waves = null;
+    for(const [la,lo] of WX_MARINE_POINTS){
+      try{
+        const m = await wxFetchJson(`https://marine-api.open-meteo.com/v1/marine?latitude=${la}&longitude=${lo}&hourly=wave_height,wave_direction,wave_period&timezone=America%2FSantiago&forecast_days=5`);
+        const M = m.hourly; const pts = [];
+        for(let i=0;i<M.time.length;i++){
+          if(Number(M.time[i].slice(11,13)) % 3 || M.wave_height[i]==null) continue;
+          pts.push({ t: M.time[i].slice(0,16), h: Math.round(M.wave_height[i]*10)/10,
+            dir: M.wave_direction[i]==null ? null : Math.round(M.wave_direction[i]), p: M.wave_period[i]==null ? null : Math.round(M.wave_period[i]) });
+        }
+        if(pts.length >= 8){ waves = { source:'Open-Meteo Marine', issued: new Date().toISOString().slice(0,13)+':00', points: pts }; break; }
+      }catch(e){ /* probar siguiente punto */ }
+    }
+    WX = { source:'Open-Meteo', location:'Bahía San Vicente', captured: new Date().toISOString().slice(0,10),
+      updatedAt: new Date().toISOString(), slots, waves: waves || WX.waves };
+    wxLiveError = null;
+    try{ localStorage.setItem(WX_CACHE_KEY, JSON.stringify(WX)); }catch(e){}
+  }catch(err){
+    wxLiveError = (err && err.message) || 'error de red';
+  }finally{
+    wxLoading = false; wxLastCi = null; renderWeather();
+  }
+}
+(function wxInitFromCache(){
+  try{
+    const c = JSON.parse(localStorage.getItem(WX_CACHE_KEY)||'null');
+    if(c && Array.isArray(c.slots) && c.slots.length && c.updatedAt) WX = c;
+  }catch(e){}
+})();
+
+let wxLastCi = null;
+renderWeather();
+wxLoadLive(false);
+setInterval(()=>wxLoadLive(false), WX_REFRESH_MIN*60*1000);
+let wxLastCi_unused = (WX&&WX.slots&&WX.slots.length) ? wxCurrentIndex(WX.slots) : null;
+setInterval(()=>{ // avanza la franja "ahora" sin recargar
+  const ci = (WX&&WX.slots&&WX.slots.length) ? wxCurrentIndex(WX.slots) : null;
+  if(ci!==wxLastCi){ wxLastCi = ci; renderWeather(); }
+}, 5*60*1000);
 
 </script>
 </body>
