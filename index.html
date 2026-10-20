@@ -289,7 +289,7 @@
     display:flex;align-items:center;justify-content:center;padding:20px;
   }
   .modal{
-    background:#FFFFFF;border-radius:16px;max-width:560px;width:100%;max-height:90vh;overflow-y:auto;
+    background:#FFFFFF;border-radius:16px;max-width:680px;width:100%;max-height:90vh;overflow-y:auto;
     box-shadow:0 20px 60px rgba(18,38,66,.35);
   }
   .modal-head{display:flex;justify-content:space-between;align-items:center;
@@ -304,6 +304,12 @@
     font-family:inherit;font-size:13.5px;padding:8px 10px;border-radius:8px;
     border:1px solid var(--border-soft);color:var(--text);background:#FFFFFF;
   }
+  .form-row label{min-width:0;}
+  .vent-pair input[type=time]{width:100%;}
+  .vent-pair{display:flex;align-items:center;gap:4px;margin-top:2px;}
+  .vent-pair input{flex:1;min-width:0;padding:6px 6px !important;font-size:12.5px !important;}
+  .vent-pair span{font-size:11px;color:var(--text-faint);}
+  .vent-cap{font-size:10.5px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:.03em;margin-top:4px;}
   .form-row input:focus, .form-row select:focus{outline:2px solid var(--teal);outline-offset:0;}
   .modal-actions{display:flex;align-items:center;gap:10px;margin-top:6px;}
   .modal-btn{border-radius:9px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;border:1px solid transparent;}
@@ -540,13 +546,21 @@
       <div class="form-row">
         <label>ETA
           <input type="date" id="f_eta">
+          <span class="vent-cap">Ventana de arribo</span>
+          <span class="vent-pair"><input type="time" id="f_eta_h1" aria-label="ETA ventana desde"><span>a</span><input type="time" id="f_eta_h2" aria-label="ETA ventana hasta"></span>
         </label>
         <label>ETB
           <input type="date" id="f_etb">
+          <span class="vent-cap">Ventana de atraque</span>
+          <span class="vent-pair"><input type="time" id="f_etb_h1" aria-label="ETB ventana desde"><span>a</span><input type="time" id="f_etb_h2" aria-label="ETB ventana hasta"></span>
         </label>
         <label>ETD
           <input type="date" id="f_etd">
+          <span class="vent-cap">Ventana de zarpe</span>
+          <span class="vent-pair"><input type="time" id="f_etd_h1" aria-label="ETD ventana desde"><span>a</span><input type="time" id="f_etd_h2" aria-label="ETD ventana hasta"></span>
         </label>
+      </div>
+      <div style="font-size:11px;color:var(--text-faint);margin:-4px 0 12px;">Las ventanas horarias no se muestran en la planificación; solo aparecen en los informes descargados.
       </div>
       <div class="modal-actions">
         <button type="button" id="btnDeleteVessel" class="modal-btn danger" style="display:none;">Eliminar</button>
@@ -1167,6 +1181,7 @@ function parseHtpWorkbook(workbook){
         if(/SITIO SUR|\bSUR\b/.test(t)){ site='sur'; break; }
       }
       if(!site) site = result.norte.length<=result.sur.length ? 'norte' : 'sur';
+      const hasVent = /VENT/i.test(String(row[colIdx+11]||''));
 
       // Read data rows following the header until the next header/section or a long blank gap.
       let blanks = 0;
@@ -1191,6 +1206,10 @@ function parseHtpWorkbook(workbook){
           etd: (excelDateToJS(drow[colIdx+9]) || null),
           color: normColor(drow[colIdx+10])
         });
+        if(hasVent){
+          const rec = result[site][result[site].length-1];
+          VENT_KEYS.forEach((k,i)=>{ const [h1,h2]=parseVentText(drow[colIdx+11+i]); if(h1){ rec[k+'_h1']=h1; rec[k+'_h2']=h2||null; } });
+        }
       }
       r += 1; // skip ahead a little; outer loop continues scanning for the next header
     }
@@ -1240,6 +1259,14 @@ document.getElementById('excelInput').addEventListener('change', function(e){
         return;
       }
 
+      // Conserva las ventanas horarias ya ingresadas si la nave sigue en la nueva planilla (mismo sitio, N° y nombre).
+      ['norte','sur'].forEach(site=>{
+        data[site].forEach(v=>{
+          if(VENT_KEYS.some(k=>v[k+'_h1']||v[k+'_h2'])) return;
+          const prev=(DATA[site]||[]).find(x=>x.n===v.n && String(x.nave||'').trim().toUpperCase()===String(v.nave||'').trim().toUpperCase());
+          if(prev) VENT_KEYS.forEach(k=>{ if(prev[k+'_h1']) v[k+'_h1']=prev[k+'_h1']; if(prev[k+'_h2']) v[k+'_h2']=prev[k+'_h2']; });
+        });
+      });
       loadData(data, lastUpdateLabel || null);
 
       uploadNotice.className = 'notice success';
@@ -1299,6 +1326,20 @@ function inf30Ctx(){
   return {now,hoy,fin,f,dayOf,naves,stamp};
 }
 
+// --- Ventanas horarias de ETA/ETB/ETD (solo informes) ---
+const VENT_KEYS=['eta','etb','etd'];
+function fmtVent(v,k){
+  const a=(v&&v[k+'_h1'])||'', b=(v&&v[k+'_h2'])||'';
+  if(a&&b) return a===b ? a : a+'–'+b;
+  return a||b||'';
+}
+function parseVentText(t){
+  const m=String(t==null?'':t).match(/(\d{1,2}:\d{2})(?:\s*[–\-a]+\s*(\d{1,2}:\d{2}))?/);
+  if(!m) return [null,null];
+  const pad=x=>x? x.padStart(5,'0') : null;
+  return [pad(m[1]), pad(m[2]||null)];
+}
+
 // --- Excel del informe 30 días ---
 function informe30Excel(){
   if(!window.XLSX){ alert('No se pudo cargar el generador de Excel. Revisa tu conexión e inténtalo de nuevo.'); return; }
@@ -1308,30 +1349,30 @@ function informe30Excel(){
     ['Generado el '+f(now)+' '+now.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})],
     []
   ];
-  const merges=[0,1].map(r=>({s:{r,c:0},e:{r,c:4}}));
+  const merges=[0,1].map(r=>({s:{r,c:0},e:{r,c:8}}));
   const dateCells=[];
   [['norte','Sitio Norte'],['sur','Sitio Sur']].forEach(([key,label])=>{
     const lst=naves(key);
-    merges.push({s:{r:aoa.length,c:0},e:{r:aoa.length,c:4}});
+    merges.push({s:{r:aoa.length,c:0},e:{r:aoa.length,c:8}});
     aoa.push(['Huachipato — '+label+' ('+lst.length+' naves)']);
-    aoa.push(['NAVE','AGENCIA','ETA','ETC','DÍAS']);
+    aoa.push(['NAVE','AGENCIA','ETA','VENTANA ETA','ETB','VENTANA ETB','ETC','VENTANA ETC','DÍAS']);
     if(!lst.length){ aoa.push(['Sin naves programadas en la ventana.']); }
     lst.forEach(v=>{
-      const a=dayOf(v.eta), e=dayOf(v.etd||v.eta);
+      const a=dayOf(v.eta), b=dayOf(v.etb), e=dayOf(v.etd||v.eta);
       const dias=(a&&e)? Math.round((e-a)/86400000)+1 : '';
       dateCells.push(aoa.length);
-      aoa.push([v.nave||'—', v.agencia||'—', a||'—', e||'—', dias]);
+      aoa.push([v.nave||'—', v.agencia||'—', a||'—', fmtVent(v,'eta'), b||'—', fmtVent(v,'etb'), e||'—', fmtVent(v,'etd'), dias]);
     });
     aoa.push([]);
   });
-  aoa.push(['ETA: fecha estimada de arribo · ETC: fecha estimada de término de faena (ETD).']);
+  aoa.push(['ETA: fecha estimada de arribo · ETB: fecha estimada de atraque · ETC: fecha estimada de término de faena (ETD). Ventana: rango horario estimado.']);
   const ws=XLSX.utils.aoa_to_sheet(aoa,{cellDates:true});
-  dateCells.forEach(r=>[2,3].forEach(c=>{
+  dateCells.forEach(r=>[2,4,6].forEach(c=>{
     const cell=ws[XLSX.utils.encode_cell({r,c})];
     if(cell && cell.t==='d'){ cell.z='dd-mm-yyyy'; }
   }));
   ws['!merges']=merges;
-  ws['!cols']=[{wch:34},{wch:22},{wch:13},{wch:13},{wch:7}];
+  ws['!cols']=[{wch:30},{wch:18},{wch:12},{wch:13},{wch:12},{wch:13},{wch:12},{wch:13},{wch:7}];
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Próximos 30 días');
   XLSX.writeFile(wb,'Informe_Naves_30dias_HTP_'+stamp+'.xlsx',{cellDates:true});
@@ -1395,13 +1436,16 @@ function informe30Pdf(){
     if(!lst.length){ doc.setFont('helvetica','italic'); doc.setFontSize(9.5); doc.text('Sin naves programadas en la ventana.',18,y+5); y+=16; return; }
     doc.autoTable({
       startY:y, margin:{left:18,right:18,top:26},
-      head:[['NAVE','AGENCIA','ETA','ETC']],
-      body:lst.map(v=>[v.nave||'—', v.agencia||'—', f(v.eta), f(v.etd||v.eta)]),
+      head:[['NAVE','AGENCIA','ETA','ETB','ETC']],
+      body:lst.map(v=>{
+        const cell=(d,k)=>{ const w=fmtVent(v,k); return d==='—'||!w ? d : d+'\n'+w; };
+        return [v.nave||'—', v.agencia||'—', cell(f(v.eta),'eta'), cell(f(v.etb||v.eta),'etb'), cell(f(v.etd||v.eta),'etd')];
+      }),
       theme:'plain',
       styles:{font:'helvetica',fontSize:9.5,cellPadding:{top:2.4,bottom:2.4,left:3,right:3},textColor:[27,35,51],lineColor:[217,222,232],lineWidth:{bottom:0.2}},
       headStyles:{fillColor:NAVY,textColor:255,fontStyle:'bold'},
       alternateRowStyles:{fillColor:[243,245,249]},
-      columnStyles:{0:{cellWidth:72,fontStyle:'bold'},1:{cellWidth:36},2:{halign:'center'},3:{halign:'center'}},
+      columnStyles:{0:{cellWidth:58,fontStyle:'bold'},1:{cellWidth:31},2:{halign:'center'},3:{halign:'center'},4:{halign:'center'}},
       didParseCell:d=>{ if(d.section==='head' && d.column.index>1) d.cell.styles.halign='center'; },
       didDrawPage:d=>{ if(d.pageNumber>1) header(); }
     });
@@ -1409,7 +1453,8 @@ function informe30Pdf(){
   });
   doc.setFontSize(8); doc.setTextColor(...GREY); doc.setFont('helvetica','normal');
   if(y>H-20){ doc.addPage(); header(); y=28; }
-  doc.text('ETA: fecha estimada de arribo · ETC: fecha estimada de término de faena (ETD).',18,y);
+  doc.text('ETA: fecha estimada de arribo · ETB: fecha estimada de atraque · ETC: fecha estimada de término de faena (ETD).',18,y);
+  doc.text('Bajo cada fecha se indica la ventana horaria estimada, cuando está informada.',18,y+4);
   footer();
   doc.save('Informe_Naves_30dias_HTP_'+stamp+'.pdf');
 }
@@ -1541,6 +1586,7 @@ function openVesselModal(mode, site, n){
     f('f_eta').value = toDateInputValue(v.eta);
     f('f_etb').value = toDateInputValue(v.etb);
     f('f_etd').value = toDateInputValue(v.etd);
+    VENT_KEYS.forEach(k=>{ f('f_'+k+'_h1').value = v[k+'_h1']||''; f('f_'+k+'_h2').value = v[k+'_h2']||''; });
   } else {
     const maxN = DATA[site].reduce((m,x)=> Math.max(m, x.n||0), 0);
     f('f_n').value = maxN + 1;
@@ -1554,6 +1600,7 @@ function openVesselModal(mode, site, n){
     f('f_eta').value = '';
     f('f_etb').value = '';
     f('f_etd').value = '';
+    VENT_KEYS.forEach(k=>{ f('f_'+k+'_h1').value = ''; f('f_'+k+'_h2').value = ''; });
   }
   document.getElementById('vesselModalBackdrop').style.display = 'flex';
 }
@@ -1603,6 +1650,10 @@ document.getElementById('vesselForm').addEventListener('submit', (e)=>{
     etd: f('f_etd').value ? f('f_etd').value + 'T00:00:00' : null,
     color: f('f_color').value || null
   };
+  VENT_KEYS.forEach(k=>{
+    record[k+'_h1'] = f('f_'+k+'_h1').value || null;
+    record[k+'_h2'] = f('f_'+k+'_h2').value || null;
+  });
 
   if(modalMode==='add'){
     DATA[newSite].push(record);
@@ -1631,13 +1682,13 @@ function buildExportWorkbook(){
   for(let i=0;i<7;i++) aoa.push([]);
   aoa.push(['','','HUACHIPATO — SITIO NORTE']);
   aoa.push([`Actualización: ${new Date().toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric'})}`]);
-  aoa.push(['','','N°','NAVES','AGENCIA','CLIENTE','FAENA','PRODUCTO','TONS','ETA','ETB','ETD','COLOR OPER.']);
+  aoa.push(['','','N°','NAVES','AGENCIA','CLIENTE','FAENA','PRODUCTO','TONS','ETA','ETB','ETD','COLOR OPER.','VENT. ETA','VENT. ETB','VENT. ETD']);
 
   const dateCells = []; // {row, col, serial} — set directly on the worksheet after aoa_to_sheet, bypassing Date-object detection
 
   function pushVesselRow(v){
     const rowIdx = aoa.length; // 0-indexed row this record will land on
-    aoa.push(['','',v.n,v.nave,v.agencia,v.cliente,v.faena,v.producto,v.tons, null, null, null, v.color||'']);
+    aoa.push(['','',v.n,v.nave,v.agencia,v.cliente,v.faena,v.producto,v.tons, null, null, null, v.color||'', fmtVent(v,'eta'), fmtVent(v,'etb'), fmtVent(v,'etd')]);
     [['eta',9],['etb',10],['etd',11]].forEach(([key,col])=>{
       const serial = excelSerialFromISO(v[key]);
       if(serial!=null) dateCells.push({row:rowIdx, col, serial});
@@ -1649,7 +1700,7 @@ function buildExportWorkbook(){
   aoa.push([]);
   aoa.push(['','','HUACHIPATO — SITIO SUR']);
   aoa.push([`Actualización: ${new Date().toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric'})}`]);
-  aoa.push(['','','N°','NAVES','AGENCIA','CLIENTE','FAENA','PRODUCTO','TONS','ETA','ETB','ETD','COLOR OPER.']);
+  aoa.push(['','','N°','NAVES','AGENCIA','CLIENTE','FAENA','PRODUCTO','TONS','ETA','ETB','ETD','COLOR OPER.','VENT. ETA','VENT. ETB','VENT. ETD']);
 
   DATA.sur.slice().sort((a,b)=>(a.n||0)-(b.n||0)).forEach(pushVesselRow);
 
@@ -1658,7 +1709,7 @@ function buildExportWorkbook(){
     const addr = XLSX.utils.encode_cell({r:row, c:col});
     ws[addr] = { t:'n', v:serial, z:'dd-mm-yyyy' };
   });
-  ws['!cols'] = [{wch:2},{wch:2},{wch:6},{wch:22},{wch:14},{wch:22},{wch:14},{wch:20},{wch:10},{wch:12},{wch:12},{wch:12},{wch:12}];
+  ws['!cols'] = [{wch:2},{wch:2},{wch:6},{wch:22},{wch:14},{wch:22},{wch:14},{wch:20},{wch:10},{wch:12},{wch:12},{wch:12},{wch:12},{wch:13},{wch:13},{wch:13}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Planificación Actualizada');
   return wb;
