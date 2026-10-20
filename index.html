@@ -448,9 +448,20 @@
       <button class="btn-today" id="btnPdf">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="vertical-align:-2px;margin-right:5px;"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Descargar PDF
       </button>
-      <button class="btn-today" id="btnInforme30" title="PDF con naves de los próximos 30 días">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="vertical-align:-2px;margin-right:5px;"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Informe 30 días
-      </button>
+      <div class="inf30-wrap" style="position:relative;display:inline-block;">
+        <button class="btn-today" id="btnInforme30" title="Naves de los próximos 30 días en PDF y/o Excel" aria-haspopup="true" aria-expanded="false">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="vertical-align:-2px;margin-right:5px;"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Informe 30 días ▾
+        </button>
+        <div id="inf30Menu" role="menu" style="display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:80;background:#fff;border:1px solid var(--border-soft);border-radius:10px;box-shadow:0 10px 28px rgba(18,38,66,.16);padding:5px;min-width:170px;">
+          <button type="button" class="inf30-opt" data-fmt="pdf" role="menuitem">PDF</button>
+          <button type="button" class="inf30-opt" data-fmt="xlsx" role="menuitem">Excel (.xlsx)</button>
+          <button type="button" class="inf30-opt" data-fmt="both" role="menuitem">PDF + Excel</button>
+        </div>
+      </div>
+      <style>
+        .inf30-opt{display:block;width:100%;text-align:left;background:none;border:none;border-radius:7px;padding:8px 12px;font-family:inherit;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;}
+        .inf30-opt:hover{background:var(--teal-dim);color:var(--teal);}
+      </style>
       <button class="btn-today" id="btnClientView">Vista Cliente</button>
       <button class="btn-today" id="btnExportExcel">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="vertical-align:-2px;margin-right:5px;"><path d="M12 15V3m0 12l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Exportar Excel
@@ -1272,10 +1283,7 @@ try{
 }catch(err){ console.error('No se pudo inicializar Firebase', err); fsAvailable = false; }
 
 // ===== Informe 30 días: Nave, Agencia, ETA, ETC (ETD) por sitio, desde hoy =====
-document.getElementById('btnInforme30').addEventListener('click', ()=>{
-  if(!window.jspdf || !window.jspdf.jsPDF){ alert('No se pudo cargar el generador de PDF. Revisa tu conexión e inténtalo de nuevo.'); return; }
-  const { jsPDF } = window.jspdf;
-  const NAVY=[29,62,136], ORANGE=[250,137,95], GREY=[91,100,117];
+function inf30Ctx(){
   const now=new Date(); const hoy=new Date(now.getFullYear(),now.getMonth(),now.getDate());
   const fin=addDays(hoy,29);
   const f=d=>{ const x=parseDate(d); return x? String(x.getDate()).padStart(2,'0')+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+x.getFullYear() : '—'; };
@@ -1286,6 +1294,76 @@ document.getElementById('btnInforme30').addEventListener('click', ()=>{
       return a && a<=fin && e>=hoy;           // estadía que cruza la ventana
     }).sort((x,y)=>dayOf(x.eta)-dayOf(y.eta));
   }
+  const dd=String(hoy.getDate()).padStart(2,'0'), mm=String(hoy.getMonth()+1).padStart(2,'0');
+  const stamp=dd+'-'+mm+'-'+hoy.getFullYear();
+  return {now,hoy,fin,f,dayOf,naves,stamp};
+}
+
+// --- Excel del informe 30 días ---
+function informe30Excel(){
+  if(!window.XLSX){ alert('No se pudo cargar el generador de Excel. Revisa tu conexión e inténtalo de nuevo.'); return; }
+  const {now,hoy,fin,f,dayOf,naves,stamp}=inf30Ctx();
+  const aoa=[
+    ['HUACHIPATO TERMINAL PORTUARIO — Planificación Naviera'],
+    ['Naves programadas – próximos 30 días'],
+    ['Ventana: '+f(hoy)+' al '+f(fin)],
+    ['Generado el '+f(now)+' '+now.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})],
+    []
+  ];
+  const merges=[0,1,2,3].map(r=>({s:{r,c:0},e:{r,c:4}}));
+  const dateCells=[];
+  [['norte','Sitio Norte'],['sur','Sitio Sur']].forEach(([key,label])=>{
+    const lst=naves(key);
+    merges.push({s:{r:aoa.length,c:0},e:{r:aoa.length,c:4}});
+    aoa.push(['Huachipato — '+label+' ('+lst.length+' naves)']);
+    aoa.push(['NAVE','AGENCIA','ETA','ETC','DÍAS']);
+    if(!lst.length){ aoa.push(['Sin naves programadas en la ventana.']); }
+    lst.forEach(v=>{
+      const a=dayOf(v.eta), e=dayOf(v.etd||v.eta);
+      const dias=(a&&e)? Math.round((e-a)/86400000)+1 : '';
+      dateCells.push(aoa.length);
+      aoa.push([v.nave||'—', v.agencia||'—', a||'—', e||'—', dias]);
+    });
+    aoa.push([]);
+  });
+  aoa.push(['ETA: fecha estimada de arribo · ETC: fecha estimada de término de faena (ETD).']);
+  const ws=XLSX.utils.aoa_to_sheet(aoa,{cellDates:true});
+  dateCells.forEach(r=>[2,3].forEach(c=>{
+    const cell=ws[XLSX.utils.encode_cell({r,c})];
+    if(cell && cell.t==='d'){ cell.z='dd-mm-yyyy'; }
+  }));
+  ws['!merges']=merges;
+  ws['!cols']=[{wch:34},{wch:22},{wch:13},{wch:13},{wch:7}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Próximos 30 días');
+  XLSX.writeFile(wb,'Informe_Naves_30dias_HTP_'+stamp+'.xlsx',{cellDates:true});
+}
+
+// --- Menú del botón Informe 30 días ---
+(function(){
+  const btn=document.getElementById('btnInforme30'), menu=document.getElementById('inf30Menu');
+  const close=()=>{ menu.style.display='none'; btn.setAttribute('aria-expanded','false'); };
+  btn.addEventListener('click',e=>{
+    e.stopPropagation();
+    const open=menu.style.display!=='none';
+    menu.style.display=open?'none':'block'; btn.setAttribute('aria-expanded',String(!open));
+  });
+  document.addEventListener('click',e=>{ if(!menu.contains(e.target)) close(); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') close(); });
+  menu.querySelectorAll('.inf30-opt').forEach(o=>o.addEventListener('click',()=>{
+    close();
+    const fmt=o.dataset.fmt;
+    if(fmt==='pdf'||fmt==='both') informe30Pdf();
+    if(fmt==='xlsx') informe30Excel();
+    if(fmt==='both') setTimeout(informe30Excel,600);
+  }));
+})();
+
+function informe30Pdf(){
+  if(!window.jspdf || !window.jspdf.jsPDF){ alert('No se pudo cargar el generador de PDF. Revisa tu conexión e inténtalo de nuevo.'); return; }
+  const { jsPDF } = window.jspdf;
+  const NAVY=[29,62,136], ORANGE=[250,137,95], GREY=[91,100,117];
+  const {now,hoy,fin,f,dayOf,naves,stamp}=inf30Ctx();
   const doc=new jsPDF({unit:'mm',format:'a4'});
   const W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight();
   const logo=document.querySelector('img[src^="data:image/png"]');
@@ -1339,9 +1417,8 @@ document.getElementById('btnInforme30').addEventListener('click', ()=>{
   if(y>H-20){ doc.addPage(); header(); y=28; }
   doc.text('ETA: fecha estimada de arribo · ETC: fecha estimada de término de faena (ETD).',18,y);
   footer();
-  const dd=String(hoy.getDate()).padStart(2,'0'), mm=String(hoy.getMonth()+1).padStart(2,'0');
-  doc.save('Informe_Naves_30dias_HTP_'+dd+'-'+mm+'-'+hoy.getFullYear()+'.pdf');
-});
+  doc.save('Informe_Naves_30dias_HTP_'+stamp+'.pdf');
+}
 
 document.getElementById('btnClientView').addEventListener('click', ()=>{
   window.__clientView = !window.__clientView;
