@@ -1305,12 +1305,10 @@ function informe30Excel(){
   const {now,hoy,fin,f,dayOf,naves,stamp}=inf30Ctx();
   const aoa=[
     ['HUACHIPATO TERMINAL PORTUARIO — Planificación Naviera'],
-    ['Naves programadas – próximos 30 días'],
-    ['Ventana: '+f(hoy)+' al '+f(fin)],
     ['Generado el '+f(now)+' '+now.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})],
     []
   ];
-  const merges=[0,1,2,3].map(r=>({s:{r,c:0},e:{r,c:4}}));
+  const merges=[0,1].map(r=>({s:{r,c:0},e:{r,c:4}}));
   const dateCells=[];
   [['norte','Sitio Norte'],['sur','Sitio Sur']].forEach(([key,label])=>{
     const lst=naves(key);
@@ -1384,11 +1382,7 @@ function informe30Pdf(){
   header();
   let y=30;
   if(logo){ try{ const r=logo.naturalWidth/logo.naturalHeight||3.6; doc.addImage(logo.src,'PNG',W-18-12*r,22,12*r,12); }catch(e){} }
-  doc.setTextColor(...NAVY); doc.setFont('helvetica','bold'); doc.setFontSize(17);
-  doc.text('Naves programadas – próximos 30 días',18,y);
-  doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(...GREY);
-  doc.text('Ventana: '+f(hoy)+' al '+f(fin),18,y+6);
-  y+=16;
+  y+=12;
   [['norte','Sitio Norte'],['sur','Sitio Sur']].forEach(([key,label])=>{
     const lst=naves(key);
     if(y>H-40){ doc.addPage(); header(); y=28; }
