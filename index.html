@@ -468,6 +468,24 @@
         .inf30-opt{display:block;width:100%;text-align:left;background:none;border:none;border-radius:7px;padding:8px 12px;font-family:inherit;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;}
         .inf30-opt:hover{background:var(--teal-dim);color:var(--teal);}
       </style>
+      <button class="btn-today" id="btnInformeSemanal" title="Informe Semanal de Operaciones para Vinko (Excel con formato HTP)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="vertical-align:-2px;margin-right:5px;"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Informe semanal
+      </button>
+      <div id="semModal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(18,38,66,.45);align-items:center;justify-content:center;padding:16px;">
+        <div style="background:#fff;border-radius:12px;max-width:380px;width:100%;padding:20px 22px;box-shadow:0 14px 40px rgba(0,0,0,.3);font-size:13px;">
+          <div style="font-weight:700;font-size:15px;color:var(--teal);margin-bottom:4px;">Informe Semanal de Operaciones</div>
+          <div style="color:var(--text-dim);margin-bottom:14px;">Elige la semana a informar. Las "próximas naves" son las que tienen ETA en los 7 días siguientes.</div>
+          <label style="display:block;font-weight:600;margin-bottom:4px;">Desde</label>
+          <input type="date" id="semDesde" style="width:100%;padding:8px;border:1px solid var(--border-soft);border-radius:8px;margin-bottom:10px;font-family:inherit;">
+          <label style="display:block;font-weight:600;margin-bottom:4px;">Hasta</label>
+          <input type="date" id="semHasta" style="width:100%;padding:8px;border:1px solid var(--border-soft);border-radius:8px;margin-bottom:16px;font-family:inherit;">
+          <div style="display:flex;gap:8px;justify-content:flex-end;">
+            <button type="button" class="btn-today" id="semCancel">Cancelar</button>
+            <button type="button" class="btn-upload" id="semOk">Generar Excel</button>
+          </div>
+          <div id="semMsg" style="margin-top:10px;color:var(--text-dim);font-size:12px;"></div>
+        </div>
+      </div>
       <button class="btn-today" id="btnClientView">Vista Cliente</button>
       <button class="btn-today" id="btnExportExcel">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="vertical-align:-2px;margin-right:5px;"><path d="M12 15V3m0 12l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Exportar Excel
@@ -2155,6 +2173,191 @@ setInterval(()=>{ // avanza la franja "ahora" sin recargar
   if(ci!==wxLastCi){ wxLastCi = ci; renderWeather(); }
 }, 5*60*1000);
 
+</script>
+
+<script>
+// ---------- Informe Semanal de Operaciones (Excel con formato HTP, para Vinko) ----------
+(function(){
+  const $=id=>document.getElementById(id);
+  const modal=$('semModal'), desde=$('semDesde'), hasta=$('semHasta'), msg=$('semMsg');
+  const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const fromIso=s=>{ const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
+  $('btnInformeSemanal').addEventListener('click',()=>{
+    const hoy=new Date(); const h=new Date(hoy.getFullYear(),hoy.getMonth(),hoy.getDate());
+    desde.value=iso(addDays(h,-6)); hasta.value=iso(h); msg.textContent='';
+    modal.style.display='flex';
+  });
+  $('semCancel').addEventListener('click',()=>modal.style.display='none');
+  modal.addEventListener('click',e=>{ if(e.target===modal) modal.style.display='none'; });
+  $('semOk').addEventListener('click',async()=>{
+    if(!desde.value||!hasta.value){ msg.textContent='Indica ambas fechas.'; return; }
+    const ini=fromIso(desde.value), fin=fromIso(hasta.value);
+    if(fin<ini){ msg.textContent='La fecha "Hasta" debe ser posterior a "Desde".'; return; }
+    msg.textContent='Generando…';
+    try{ await informeSemanalExcel(ini,fin); modal.style.display='none'; }
+    catch(err){ console.error(err); msg.textContent='No se pudo generar el Excel: '+(err&&err.message||err); }
+  });
+})();
+
+function cargarExcelJS(){
+  if(window.ExcelJS) return Promise.resolve();
+  const urls=['https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js',
+              'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js',
+              'https://unpkg.com/exceljs@4.4.0/dist/exceljs.min.js'];
+  return urls.reduce((p,u)=>p.then(()=>window.ExcelJS?null:new Promise((res)=>{
+    const s=document.createElement('script'); s.src=u; s.onload=()=>res(); s.onerror=()=>res(); document.head.appendChild(s);
+  })),Promise.resolve()).then(()=>{ if(!window.ExcelJS) throw new Error('no se pudo cargar la librería de Excel (revisa la conexión)'); });
+}
+
+async function informeSemanalExcel(ini,fin){
+  await cargarExcelJS();
+  const MES=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const MESL=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const day=d=>{ const x=parseDate(d); return x&&!isNaN(x)? new Date(x.getFullYear(),x.getMonth(),x.getDate()) : null; };
+  // fecha-hora de un evento (usa la hora estimada si existe; si no, inicio del día para ETA/ETB y fin del día para ETD)
+  const dt=(v,k,finDia)=>{ const d=day(v[k]); if(!d) return null; const h=fmtVent(v,k);
+    if(h&&/^\d{1,2}:\d{2}/.test(h)){ const [hh,mm]=h.split(':').map(Number); return new Date(d.getFullYear(),d.getMonth(),d.getDate(),hh,mm); }
+    return finDia? new Date(d.getFullYear(),d.getMonth(),d.getDate()+1) : d; };
+  const finSem=addDays(fin,1); // exclusivo
+  const finProx=addDays(fin,8);
+  const dd=d=>String(d.getDate()).padStart(2,'0');
+  const fdmy=d=>dd(d)+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+d.getFullYear();
+  const rango=(a,b)=>{ if(!a) return ''; if(!b||+a===+b) return dd(a)+' '+MES[a.getMonth()]+'.';
+    return a.getMonth()===b.getMonth()? dd(a)+'-'+dd(b)+' '+MES[b.getMonth()]+'.' : dd(a)+' '+MES[a.getMonth()]+'-'+dd(b)+' '+MES[b.getMonth()]+'.'; };
+  const faena=v=>{ const f=(v.faena||'').trim(), p=(v.producto||'').trim(), c=(v.cliente||'').trim();
+    const t=[f,p].filter(Boolean).join(' ').toLowerCase().replace(/^./,m=>m.toUpperCase());
+    return t+(c?' ('+c+')':''); };
+  const tons=v=>{ const n=Number(v.tons); return isFinite(n)&&v.tons!==''&&v.tons!=null? n : null; };
+
+  function atendidas(site){
+    return (DATA[site]||[]).filter(v=>{ const b=day(v.etb)||day(v.eta), e=day(v.etd)||b; return b&&b<finSem&&e>=ini; })
+      .sort((x,y)=>(day(x.etb)||day(x.eta))-(day(y.etb)||day(y.eta)))
+      .map(v=>[v.nave||'—', faena(v), tons(v), rango(day(v.etb)||day(v.eta), day(v.etd))]);
+  }
+  function gira(){
+    const out=[];
+    ['norte','sur'].forEach(s=>(DATA[s]||[]).forEach(v=>{
+      const a=day(v.eta), b=day(v.etb); if(!a||!b||!(a<b)) return;
+      if(a<finSem && b>ini) out.push([v.nave||'—', faena(v)+' · Sitio '+(s==='norte'?'Norte':'Sur'), tons(v), rango(a,addDays(b,-1))]);
+    }));
+    return out;
+  }
+  function proximas(){
+    const out=[];
+    ['norte','sur'].forEach(s=>(DATA[s]||[]).forEach(v=>{ const a=day(v.eta); if(a&&a>=finSem&&a<finProx) out.push({a,s,v}); }));
+    return out.sort((x,y)=>x.a-y.a).map(({a,s,v})=>[v.nave||'—', faena(v)+' · Sitio '+(s==='norte'?'Norte':'Sur'), tons(v), rango(a)]);
+  }
+  // % ocupación = horas atracado (ETB→ETD) / horas del período
+  function ocup(site,pIni,pFin){ // pFin exclusivo
+    const tope=new Date(Math.min(+pFin,+finSem)); const total=(tope-pIni); if(total<=0) return null; let h=0;
+    (DATA[site]||[]).forEach(v=>{ const b=dt(v,'etb')||dt(v,'eta'), e=dt(v,'etd',true); if(!b||!e) return;
+      const s=Math.max(+b,+pIni), f=Math.min(+e,+tope); if(f>s) h+=f-s; });
+    return Math.min(h/total,1);
+  }
+  const mesIni=new Date(fin.getFullYear(),fin.getMonth(),1), mesAntIni=new Date(fin.getFullYear(),fin.getMonth()-1,1);
+  const anioIni=new Date(fin.getFullYear(),0,1);
+  // primer registro en Plani para advertir si el año no está completo
+  let primero=null; ['norte','sur'].forEach(s=>(DATA[s]||[]).forEach(v=>{ const b=day(v.etb)||day(v.eta); if(b&&(!primero||b<primero)) primero=b; }));
+
+  const SUR=atendidas('sur'), NOR=atendidas('norte'), GIRA=gira(), PROX=proximas();
+
+  // ---------- Construcción del Excel ----------
+  const NAVY='FF1F3A6E', ORANGE='FFE8804A', LIGHT='FFEEF2F8', GREY='FF5B6472';
+  const wb=new ExcelJS.Workbook(); wb.creator='HTP · Planificación Naviera';
+  const ws=wb.addWorksheet('Informe Semanal',{views:[{showGridLines:false}],
+    pageSetup:{paperSize:9,orientation:'portrait',fitToPage:true,fitToWidth:1,fitToHeight:0,margins:{left:.5,right:.5,top:.6,bottom:.6,header:.3,footer:.3}}});
+  ws.columns=[{width:3},{width:28},{width:40},{width:15},{width:18},{width:3}];
+  const font=(o={})=>Object.assign({name:'Arial',size:10},o);
+  const thin={style:'thin',color:{argb:'FFB7C2D6'}};
+  const box={top:thin,left:thin,bottom:thin,right:thin};
+  const NUM='#,##0.00;-#,##0.00;"-"';
+  let r=1;
+
+  const logoImg=document.querySelector('img[src^="data:image/png"]');
+  if(logoImg){ try{
+    const id=wb.addImage({base64:logoImg.src,extension:'png'});
+    const ratio=(logoImg.naturalWidth||301)/(logoImg.naturalHeight||82);
+    ws.addImage(id,{tl:{col:1,row:0.15},ext:{width:Math.round(44*ratio),height:44}});
+  }catch(e){} }
+  ws.mergeCells('C1:E1'); ws.mergeCells('C2:E2');
+  Object.assign(ws.getCell('C1'),{value:'INFORME SEMANAL DE OPERACIONES',font:font({bold:true,size:12,color:{argb:NAVY}}),alignment:{horizontal:'right'}});
+  Object.assign(ws.getCell('C2'),{value:'Huachipato Terminal Portuario',font:font({size:9,color:{argb:GREY}}),alignment:{horizontal:'right'}});
+  ws.getRow(1).height=22; ws.getRow(2).height=22;
+
+  r=4;
+  [['Semana desde',ini],['Semana hasta',fin],['Fecha de emisión',new Date()]].forEach(([l,v],i)=>{
+    ws.getCell(r+i,2).value=l; ws.getCell(r+i,2).font=font({bold:true});
+    const c=ws.getCell(r+i,3); c.value=new Date(Date.UTC(v.getFullYear(),v.getMonth(),v.getDate())); c.numFmt='dd-mm-yyyy'; c.font=font(); c.alignment={horizontal:'left'};
+  });
+  ws.getCell('D4').value='Semana N°'; ws.getCell('D4').font=font({bold:true});
+  Object.assign(ws.getCell('E4'),{value:{formula:'WEEKNUM(C5,21)'},font:font(),alignment:{horizontal:'center'},border:box});
+
+  r=8;
+  ws.getCell(r,2).value='Estimado Vinko,'; ws.getCell(r,2).font=font(); r++;
+  ws.mergeCells(r,2,r,5);
+  ws.getCell(r,2).value='Junto con saludar, se informa la gestión de operaciones del terminal entre el '+
+    fdmy(ini)+' y el '+fdmy(fin)+'.'; ws.getCell(r,2).font=font(); r+=2;
+
+  const section=t=>{ ws.getCell(r,2).value=t; ws.getCell(r,2).font=font({bold:true,size:11,color:{argb:NAVY}});
+    for(let c=2;c<=5;c++) ws.getCell(r,c).border={bottom:{style:'medium',color:{argb:NAVY}}}; r+=2; };
+  const sub=t=>{ ws.getCell(r,2).value=t; ws.getCell(r,2).font=font({bold:true,color:{argb:NAVY}}); r++; };
+  const header=labs=>{ labs.forEach((l,i)=>{ const c=ws.getCell(r,2+i); c.value=l; c.font=font({bold:true,color:{argb:'FFFFFFFF'}});
+      c.fill={type:'pattern',pattern:'solid',fgColor:{argb:NAVY}}; c.alignment={horizontal:'center',vertical:'middle'}; c.border=box; });
+    ws.getRow(r).height=18; r++; };
+  const rows=list=>{ const first=r; const L=list.length?list:[['S/N','',null,'']];
+    L.forEach(v=>{ v.forEach((x,i)=>{ const c=ws.getCell(r,2+i); c.value=x; c.font=font(); c.border=box;
+        c.alignment={horizontal:i===0?'left':'center',vertical:'middle',wrapText:true}; if(i===2) c.numFmt=NUM; }); r++; });
+    return [first,r-1]; };
+  const total=(label,[a,b])=>{ ws.getCell(r,2).value=label; ws.getCell(r,2).font=font({bold:true});
+    const c=ws.getCell(r,4); c.value={formula:`SUM(D${a}:D${b})`}; c.numFmt=NUM; c.font=font({bold:true}); c.alignment={horizontal:'center'};
+    for(let k=2;k<=5;k++){ ws.getCell(r,k).fill={type:'pattern',pattern:'solid',fgColor:{argb:LIGHT}}; ws.getCell(r,k).border=box; }
+    const row=r; r+=2; return row; };
+
+  section('GESTIÓN DE OPERACIONES');
+  sub('Naves atendidas Sitio Sur'); header(['Sitio Sur','Faena','Tons.','Fecha Atn.']); const tSur=total('Total Sitio Sur',rows(SUR));
+  sub('Naves atendidas Sitio Norte'); header(['Sitio Norte','Faena','Tons.','Fecha Atn.']); const tNor=total('Total Sitio Norte',rows(NOR));
+  sub('Naves a la Gira'); header(['Nave','Faena','Tons.','Fecha']); rows(GIRA); r++;
+  ws.mergeCells(r,2,r,3);
+  ws.getCell(r,2).value='TOTAL NAVES ATENDIDAS EN LA SEMANA (Tons.)';
+  ws.getCell(r,4).value={formula:`D${tSur}+D${tNor}`}; ws.getCell(r,4).numFmt='#,##0.00';
+  for(let k=2;k<=5;k++){ const c=ws.getCell(r,k); c.fill={type:'pattern',pattern:'solid',fgColor:{argb:ORANGE}}; c.border=box;
+    c.font=font({bold:true,color:{argb:'FFFFFFFF'}}); c.alignment={horizontal:k===2?'left':'center'}; }
+  r+=3;
+
+  section('ETA PRÓXIMAS NAVES POR RECALAR');
+  header(['Nave','Faena','Tons.','ETA']); rows(PROX); r+=2;
+
+  section('% UTILIZACIÓN TERMINAL');
+  header(['% Utilización TTMM','Mes','Norte','Sur']);
+  const u0=r;
+  const filas=[[MESL[mesAntIni.getMonth()],ocup('norte',mesAntIni,mesIni),ocup('sur',mesAntIni,mesIni)],
+               [MESL[mesIni.getMonth()],ocup('norte',mesIni,new Date(fin.getFullYear(),fin.getMonth()+1,1)),ocup('sur',mesIni,new Date(fin.getFullYear(),fin.getMonth()+1,1))],
+               ['% de Ocupación Anual',ocup('norte',anioIni,new Date(fin.getFullYear()+1,0,1)),ocup('sur',anioIni,new Date(fin.getFullYear()+1,0,1))]];
+  ws.mergeCells(u0,2,u0+2,2);
+  Object.assign(ws.getCell(u0,2),{value:'% Ocupación',font:font(),alignment:{horizontal:'center',vertical:'middle'}});
+  filas.forEach((f,i)=>{ const bold=i===2;
+    ws.getCell(r,3).value=f[0]; ws.getCell(r,3).font=font({bold});
+    [4,5].forEach((col,j)=>{ const c=ws.getCell(r,col); c.value=f[1+j]; c.numFmt='0.00%'; c.font=font({bold}); c.alignment={horizontal:'center'}; });
+    for(let k=2;k<=5;k++) ws.getCell(r,k).border=box; r++; });
+  r++;
+  const notaAnual=(primero&&primero>anioIni)? ' El % anual considera solo las naves registradas en Plani desde el '+rango(primero)+' '+primero.getFullYear()+'; reemplázalo por el valor del Libro4 si corresponde.' : '';
+  ws.mergeCells(r,2,r,5);
+  Object.assign(ws.getCell(r,2),{value:'Nota: % de ocupación estimado con las horas de atraque (ETB → ETD) registradas en Plani; el mes en curso se calcula hasta el fin de la semana informada.'+notaAnual,
+    font:font({size:8,italic:true,color:{argb:GREY}}),alignment:{wrapText:true,vertical:'top'}});
+  ws.getRow(r).height=notaAnual?36:24; r+=3;
+
+  ws.getCell(r,2).value='Saludos,'; ws.getCell(r,2).font=font(); r+=2;
+  ws.getCell(r,2).value='Javier Villa Peña'; ws.getCell(r,2).font=font({bold:true}); r++;
+  ws.getCell(r,2).value='Jefe de Operaciones Portuarias · HTP'; ws.getCell(r,2).font=font(); r++;
+  ws.getCell(r,2).value='jvilla@htpchile.cl · +56 9 6412 5464'; ws.getCell(r,2).font=font({size:9,color:{argb:GREY}});
+  ws.pageSetup.printArea='A1:F'+r;
+
+  const buf=await wb.xlsx.writeBuffer();
+  const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='Informe_Semanal_HTP_'+dd(ini)+MES[ini.getMonth()]+'-'+dd(fin)+MES[fin.getMonth()]+'_'+fin.getFullYear()+'.xlsx';
+  document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1500);
+}
 </script>
 </body>
 </html>
