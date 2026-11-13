@@ -2209,6 +2209,30 @@ function cargarExcelJS(){
   })),Promise.resolve()).then(()=>{ if(!window.ExcelJS) throw new Error('no se pudo cargar la librería de Excel (revisa la conexión)'); });
 }
 
+// Lee el % de ocupación desde el Tablero de Control de Gestión (mismo sitio github.io):
+// 1) lo último que se subió al tablero en este navegador; 2) si no, los datos publicados en el tablero.
+async function ocupacionDashboard(){
+  const norm=o=>{ if(!o||!Array.isArray(o.anual)) return null;
+    const anios=o.anual.map(x=>Number(x.anio)).filter(isFinite);
+    return {anual:o.anual, mensual:o.mensual2026||[], anio:anios.length?Math.max(...anios):null}; };
+  try{
+    const raw=localStorage.getItem('htp_dashboard_ocupacion');
+    const o=raw&&norm(JSON.parse(raw)); if(o){ o.origen='datos cargados en el tablero desde este equipo'; return o; }
+  }catch(e){}
+  try{
+    let html='';
+    for(const u of ['https://jvillapena123-cell.github.io/dashboard/index.html',
+                    'https://raw.githubusercontent.com/jvillapena123-cell/dashboard/main/index.html']){
+      try{ const res=await fetch(u,{cache:'no-store'}); if(res.ok){ html=await res.text(); if(html.includes('ocupacion: {')) break; } }catch(e){}
+    }
+    const i=html.indexOf('ocupacion: {'); if(i<0) return null;
+    let k=html.indexOf('{',i), depth=0, j=k;
+    for(;j<html.length;j++){ const ch=html[j]; if(ch==='{') depth++; else if(ch==='}'){ depth--; if(!depth) break; } }
+    const o=norm(new Function('return ('+html.slice(k,j+1)+')')()); if(o) o.origen='datos publicados en el tablero';
+    return o;
+  }catch(e){ console.warn('No se pudo leer la ocupación del tablero',e); return null; }
+}
+
 async function informeSemanalExcel(ini,fin){
   await cargarExcelJS();
   const MES=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
@@ -2247,17 +2271,8 @@ async function informeSemanalExcel(ini,fin){
     ['norte','sur'].forEach(s=>(DATA[s]||[]).forEach(v=>{ const a=day(v.eta); if(a&&a>=finSem&&a<finProx) out.push({a,s,v}); }));
     return out.sort((x,y)=>x.a-y.a).map(({a,s,v})=>[v.nave||'—', faena(v)+' · Sitio '+(s==='norte'?'Norte':'Sur'), tons(v), rango(a)]);
   }
-  // % ocupación = horas atracado (ETB→ETD) / horas del período
-  function ocup(site,pIni,pFin){ // pFin exclusivo
-    const tope=new Date(Math.min(+pFin,+finSem)); const total=(tope-pIni); if(total<=0) return null; let h=0;
-    (DATA[site]||[]).forEach(v=>{ const b=dt(v,'etb')||dt(v,'eta'), e=dt(v,'etd',true); if(!b||!e) return;
-      const s=Math.max(+b,+pIni), f=Math.min(+e,+tope); if(f>s) h+=f-s; });
-    return Math.min(h/total,1);
-  }
   const mesIni=new Date(fin.getFullYear(),fin.getMonth(),1), mesAntIni=new Date(fin.getFullYear(),fin.getMonth()-1,1);
-  const anioIni=new Date(fin.getFullYear(),0,1);
-  // primer registro en Plani para advertir si el año no está completo
-  let primero=null; ['norte','sur'].forEach(s=>(DATA[s]||[]).forEach(v=>{ const b=day(v.etb)||day(v.eta); if(b&&(!primero||b<primero)) primero=b; }));
+  const OC=await ocupacionDashboard();
 
   const SUR=atendidas('sur'), NOR=atendidas('norte'), GIRA=gira(), PROX=proximas();
 
@@ -2330,21 +2345,33 @@ async function informeSemanalExcel(ini,fin){
   section('% UTILIZACIÓN TERMINAL');
   header(['% Utilización TTMM','Mes','Norte','Sur']);
   const u0=r;
-  const filas=[[MESL[mesAntIni.getMonth()],ocup('norte',mesAntIni,mesIni),ocup('sur',mesAntIni,mesIni)],
-               [MESL[mesIni.getMonth()],ocup('norte',mesIni,new Date(fin.getFullYear(),fin.getMonth()+1,1)),ocup('sur',mesIni,new Date(fin.getFullYear(),fin.getMonth()+1,1))],
-               ['% de Ocupación Anual',ocup('norte',anioIni,new Date(fin.getFullYear()+1,0,1)),ocup('sur',anioIni,new Date(fin.getFullYear()+1,0,1))]];
+  const val=(x)=> (x==null||!isFinite(Number(x)))? null : Number(x)/100;   // el tablero guarda los % en base 100
+  const mesDash=(d)=>{ if(!OC||d.getFullYear()!==OC.anio) return null;
+    const m=(OC.mensual||[]).find(x=>String(x.mes||'').slice(0,3).toLowerCase()===MESL[d.getMonth()].slice(0,3).toLowerCase());
+    return m? [val(m.norte),val(m.sur)] : null; };
+  const anualDash=()=>{ if(!OC) return null;
+    if(fin.getFullYear()===OC.anio){ const m=(OC.mensual||[]).find(x=>/anual/i.test(String(x.mes||''))); if(m) return [val(m.norte),val(m.sur)]; }
+    const a=(OC.anual||[]).find(x=>x.anio===fin.getFullYear()); return a? [val(a.norte),val(a.sur)] : null; };
+  const filas=[[MESL[mesAntIni.getMonth()]].concat(mesDash(mesAntIni)||[null,null]),
+               [MESL[mesIni.getMonth()]].concat(mesDash(mesIni)||[null,null]),
+               ['% de Ocupación Anual'].concat(anualDash()||[null,null])];
   ws.mergeCells(u0,2,u0+2,2);
   Object.assign(ws.getCell(u0,2),{value:'% Ocupación',font:font(),alignment:{horizontal:'center',vertical:'middle'}});
+  const faltan=[];
   filas.forEach((f,i)=>{ const bold=i===2;
     ws.getCell(r,3).value=f[0]; ws.getCell(r,3).font=font({bold});
-    [4,5].forEach((col,j)=>{ const c=ws.getCell(r,col); c.value=f[1+j]; c.numFmt='0.00%'; c.font=font({bold}); c.alignment={horizontal:'center'}; });
+    [4,5].forEach((col,j)=>{ const c=ws.getCell(r,col); const v=f[1+j];
+      c.value=v; c.numFmt='0.00%'; c.font=font({bold}); c.alignment={horizontal:'center'};
+      if(v==null){ c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFF7D6'}}; } });
+    if(f[1]==null&&f[2]==null) faltan.push(f[0]);
     for(let k=2;k<=5;k++) ws.getCell(r,k).border=box; r++; });
   r++;
-  const notaAnual=(primero&&primero>anioIni)? ' El % anual considera solo las naves registradas en Plani desde el '+rango(primero)+' '+primero.getFullYear()+'; reemplázalo por el valor del Libro4 si corresponde.' : '';
+  let nota='Fuente: Tablero de Control de Gestión HTP (Ocupación Muelle, Libro4)'+(OC&&OC.origen?' — '+OC.origen:'')+'.';
+  if(!OC) nota='No se pudo leer la ocupación del Tablero de Control de Gestión; completa las celdas amarillas con el Libro4.';
+  else if(faltan.length) nota+=' El tablero aún no tiene cargado: '+faltan.join(', ')+' — completa las celdas amarillas o actualiza el Libro4 en el tablero.';
   ws.mergeCells(r,2,r,5);
-  Object.assign(ws.getCell(r,2),{value:'Nota: % de ocupación estimado con las horas de atraque (ETB → ETD) registradas en Plani; el mes en curso se calcula hasta el fin de la semana informada.'+notaAnual,
-    font:font({size:8,italic:true,color:{argb:GREY}}),alignment:{wrapText:true,vertical:'top'}});
-  ws.getRow(r).height=notaAnual?36:24; r+=3;
+  Object.assign(ws.getCell(r,2),{value:nota,font:font({size:8,italic:true,color:{argb:GREY}}),alignment:{wrapText:true,vertical:'top'}});
+  ws.getRow(r).height=faltan.length||!OC?36:24; r+=3;
 
   ws.getCell(r,2).value='Saludos,'; ws.getCell(r,2).font=font(); r+=2;
   ws.getCell(r,2).value='Javier Villa Peña'; ws.getCell(r,2).font=font({bold:true}); r++;
