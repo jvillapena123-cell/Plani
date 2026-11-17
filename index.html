@@ -977,7 +977,7 @@ function buildSite(container, siteKey, siteLabel, vessels, rangeStart, rangeEnd,
   // Todo el período visible a la vez (como la lámina); si no cabe, columnas de 16 px con scroll horizontal.
   const scrollEl = el.querySelector('.gantt-scroll');
   const availableWidth = Math.max(scrollEl.clientWidth - 24 - totalLeftWidth, 0);
-  const dayColPx = Math.min(60, Math.max(7, Math.floor(availableWidth / totalDays * 100) / 100));
+  const dayColPx = Math.min(160, Math.max(7, Math.floor(availableWidth / totalDays * 100) / 100));
   const narrow = dayColPx < 14;
   grid.style.gridTemplateColumns = `${leftColsTemplate} repeat(${totalDays}, ${dayColPx}px)`;
   grid.style.gridTemplateRows = `34px 21px 19px repeat(${nRows}, 24px)`;
@@ -1902,11 +1902,10 @@ let __lastMobileState = isMobileView();
 window.addEventListener('resize', ()=>{
   clearTimeout(window.__mobileResizeTimer);
   window.__mobileResizeTimer = setTimeout(()=>{
-    const nowMobile = isMobileView();
-    if(nowMobile !== __lastMobileState){
-      __lastMobileState = nowMobile;
-      render();
-    }
+    // Se redibuja siempre (cambio de zoom o de tamaño de ventana) para que el Gantt ocupe todo el ancho.
+    __lastMobileState = isMobileView();
+    if(document.querySelector('.vt-tooltip.show')) return;
+    render();
   }, 200);
 });
 
