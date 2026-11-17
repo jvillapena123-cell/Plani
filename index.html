@@ -624,8 +624,8 @@
             <option value="sur">Sitio Sur</option>
           </select>
         </label>
-        <label>N°
-          <input type="number" id="f_n" min="1" required>
+        <label>N° <span style="font-weight:400;opacity:.7;">(automático)</span>
+          <input type="number" id="f_n" min="1" readonly tabindex="-1" style="background:#F1F3F7;color:#5A6273;">
         </label>
       </div>
       <div class="form-row">
@@ -759,8 +759,25 @@ let DATA, norte, sur, all, minD, maxD, months, KNOWN_ISSUES = [];
 const monthSelect = document.getElementById('monthSelect');
 const today = new Date(); today.setHours(0,0,0,0);
 
+// N° correlativo por sitio: cada sitio se numera 1, 2, 3… según el orden cronológico
+// de llegada (ETA; si falta, ETB o ETD). Se recalcula en cada carga, edición o borrado.
+function seqDateKey(v){
+  const d = parseDate(v.eta) || parseDate(v.etb) || parseDate(v.etd);
+  return d ? d.getTime() : Infinity;
+}
+function renumberSites(dataObj){
+  ['norte','sur'].forEach(site=>{
+    const arr = (dataObj[site]||[]).map((v,i)=>({v,i}));
+    arr.sort((a,b)=> (seqDateKey(a.v) - seqDateKey(b.v))
+      || ((parseDate(a.v.etb)||0) - (parseDate(b.v.etb)||0))
+      || ((a.v.n||0) - (b.v.n||0)) || (a.i - b.i));
+    dataObj[site] = arr.map((x,idx)=> Object.assign(x.v, {n: idx+1}));
+  });
+  return dataObj;
+}
+
 function loadData(dataObj, updateLabel){
-  DATA = dataObj;
+  DATA = renumberSites(dataObj);
   norte = enrich(DATA.norte, 'norte');
   sur = enrich(DATA.sur, 'sur');
   all = norte.concat(sur);
@@ -1444,11 +1461,11 @@ document.getElementById('excelInput').addEventListener('change', function(e){
         return;
       }
 
-      // Conserva las ventanas horarias ya ingresadas si la nave sigue en la nueva planilla (mismo sitio, N° y nombre).
+      // Conserva las ventanas horarias ya ingresadas si la nave sigue en la nueva planilla (mismo sitio, nombre y ETA).
       ['norte','sur'].forEach(site=>{
         data[site].forEach(v=>{
           if(VENT_KEYS.some(k=>v[k+'_h1']||v[k+'_h2'])) return;
-          const prev=(DATA[site]||[]).find(x=>x.n===v.n && String(x.nave||'').trim().toUpperCase()===String(v.nave||'').trim().toUpperCase());
+          const prev=(DATA[site]||[]).find(x=>seqDateKey(x)===seqDateKey(v) && String(x.nave||'').trim().toUpperCase()===String(v.nave||'').trim().toUpperCase());
           if(prev) VENT_KEYS.forEach(k=>{ if(prev[k+'_h1']) v[k+'_h1']=prev[k+'_h1']; if(prev[k+'_h2']) v[k+'_h2']=prev[k+'_h2']; });
         });
       });
@@ -1812,14 +1829,11 @@ document.getElementById('vesselForm').addEventListener('submit', (e)=>{
   e.preventDefault();
   const f = id => document.getElementById(id);
   const newSite = f('f_site').value;
-  const newN = parseInt(f('f_n').value, 10);
-
   if(!f('f_nave').value.trim()){ window.alert('El nombre de la nave es obligatorio.'); return; }
-  if(isNaN(newN)){ window.alert('El N° debe ser un número.'); return; }
 
-  // Uniqueness check for N° within the target site (excluding the record being edited)
-  const dup = DATA[newSite].some(x=> x.n===newN && !(modalMode==='edit' && newSite===modalSite && x.n===modalOrigN));
-  if(dup){ window.alert(`Ya existe una nave con N° ${newN} en ${newSite==='norte'?'Sitio Norte':'Sitio Sur'}.`); return; }
+  // El N° es correlativo y se recalcula al guardar; aquí solo se asigna uno provisorio único.
+  const keepN = modalMode==='edit' && newSite===modalSite;
+  const newN = keepN ? modalOrigN : DATA[newSite].reduce((m,x)=> Math.max(m, x.n||0), 0) + 1;
 
   const record = {
     n: newN,
