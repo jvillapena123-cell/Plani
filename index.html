@@ -1153,7 +1153,6 @@ function renderSummary(shown, rangeStart, rangeEnd){
   const count = shown.length;
   const tons = shown.reduce((s,v)=> s + (Number(v.tons)||0), 0);
   let lastEnd = rangeEnd;
-  shown.forEach(v=>{ if(v._end && v._end > lastEnd) lastEnd = v._end; });
   const p0 = titleCase(MES3[rangeStart.getMonth()]) + ' ' + rangeStart.getFullYear();
   const p1 = titleCase(MES3[lastEnd.getMonth()]) + ' ' + lastEnd.getFullYear();
   const period = p0===p1 ? p0 : `${p0} – ${p1}`;
@@ -1212,7 +1211,7 @@ function render(){
   const isMulti = isAll || span>1;
 
   // Si el período incluye hoy, se listan también las naves siguientes (fuera del período), como en la lámina.
-  const withUpcoming = !isAll && rangeStart <= today && today <= rangeEnd;
+  const withUpcoming = false; // solo se muestran y suman las naves del período seleccionado
   let shown = [];
   if(currentSite==='ambos' || currentSite==='norte'){
     shown = shown.concat(buildSite(container, 'norte', 'Huachipato — Sitio Norte', norte, rangeStart, rangeEnd, rangeLabel, isMulti, withUpcoming) || []);
