@@ -563,6 +563,7 @@
         <option value="1">1 mes</option>
         <option value="2">2 meses</option>
         <option value="3">3 meses</option>
+        <option value="last">Hasta última nave</option>
       </select>
       <button class="btn-today" id="btnToday">Hoy</button>
       <button class="btn-today" id="btnPdf">
@@ -835,7 +836,7 @@ function setDefaultRange(){
   const startIdx = Math.max(0, idx-1);
   monthSelect.selectedIndex = startIdx + 1;
   const sp = document.getElementById('spanSelect');
-  if(sp) sp.value = (idx>startIdx) ? '2' : '1';
+  if(sp) sp.value = 'last';
 }
 document.getElementById('btnToday').addEventListener('click', ()=>{
   setDefaultRange();
@@ -974,8 +975,9 @@ function buildSite(container, siteKey, siteLabel, vessels, rangeStart, rangeEnd,
   // Todo el período visible a la vez (como la lámina); si no cabe, columnas de 16 px con scroll horizontal.
   const scrollEl = el.querySelector('.gantt-scroll');
   const availableWidth = Math.max(scrollEl.clientWidth - 24 - totalLeftWidth, 0);
-  const dayColPx = Math.min(60, Math.max(12, Math.floor(availableWidth / totalDays)));
-  grid.style.gridTemplateColumns = `${leftColsTemplate} repeat(${totalDays}, minmax(${dayColPx}px, 1fr))`;
+  const dayColPx = Math.min(60, Math.max(7, Math.floor(availableWidth / totalDays * 100) / 100));
+  const narrow = dayColPx < 14;
+  grid.style.gridTemplateColumns = `${leftColsTemplate} repeat(${totalDays}, ${dayColPx}px)`;
   grid.style.gridTemplateRows = `34px 21px 19px repeat(${nRows}, 24px)`;
   grid.style.position = 'relative';
 
@@ -1035,12 +1037,14 @@ function buildSite(container, siteKey, siteLabel, vessels, rangeStart, rangeEnd,
     const n = document.createElement('div');
     n.className = 'hx-dnum' + extra;
     n.style.gridColumn = String(d+dayColStart); n.style.gridRow = '2';
-    n.textContent = m.date.getDate();
+    const dn = m.date.getDate();
+    n.textContent = (!narrow || dn%5===0) && !(narrow && dn===30) ? dn : '';
+    if(narrow){ n.style.fontSize='8px'; n.style.overflow='visible'; }
     grid.appendChild(n);
     const l = document.createElement('div');
     l.className = 'hx-dlet' + extra;
     l.style.gridColumn = String(d+dayColStart); l.style.gridRow = '3';
-    l.textContent = DOW[m.date.getDay()];
+    l.textContent = narrow ? '' : DOW[m.date.getDay()];
     grid.appendChild(l);
   });
 
@@ -1131,7 +1135,7 @@ function periodText(rangeStart, rangeEnd){
   const parts = [];
   let cur = new Date(rangeStart.getFullYear(), rangeStart.getMonth(), 1);
   while(cur <= rangeEnd){ parts.push({m:cur.getMonth(), y:cur.getFullYear()}); cur = new Date(cur.getFullYear(), cur.getMonth()+1, 1); }
-  if(parts.length > 4){
+  if(parts.length > 2){
     const a = parts[0], b = parts[parts.length-1];
     return `${titleCase(MESES[a.m])} ${a.y} – ${titleCase(MESES[b.m])} ${b.y}`;
   }
@@ -1178,7 +1182,12 @@ function render(){
 
   const isAll = monthSelect.value === 'all';
   const spanSelect = document.getElementById('spanSelect');
-  const span = isAll ? 1 : parseInt(spanSelect.value, 10) || 1;
+  let span = isAll ? 1 : parseInt(spanSelect.value, 10) || 1;
+  if(!isAll && spanSelect.value==='last' && maxD){
+    // El calendario corre desde el mes elegido hasta el mes de la última nave programada.
+    const [y0,m0] = monthSelect.value.split('-').map(Number);
+    span = Math.max(1, (maxD.getFullYear()-y0)*12 + (maxD.getMonth()-m0) + 1);
+  }
   spanSelect.disabled = isAll;
 
   let rangeStart, rangeEnd, rangeLabel;
