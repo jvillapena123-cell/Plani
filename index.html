@@ -1028,14 +1028,14 @@ function buildSite(container, siteKey, siteLabel, vessels, rangeStart, rangeEnd,
       msep: d>0 && date.getDate()===1});
   }
 
-  // Fila 1: "Fecha de Inicio" + franja de meses
+  // Fila 1: celda vacía (columnas fijas) + franja de meses
   const fechaCell = document.createElement('div');
   fechaCell.className = 'left-cell fecha-inicio';
   fechaCell.style.gridColumn = `1 / span ${nLeft}`;
   fechaCell.style.gridRow = '1';
   fechaCell.style.position = 'sticky';
   fechaCell.style.left = '0';
-  fechaCell.innerHTML = `${CAL_SVG}<span>Fecha de Inicio:</span><b>01-01-${rangeStart.getFullYear()}</b>`;
+  fechaCell.innerHTML = ''; // celda vacía: se quitó "Fecha de Inicio" (no aplica)
   grid.appendChild(fechaCell);
 
   let i = 0;
