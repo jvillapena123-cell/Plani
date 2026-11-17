@@ -445,7 +445,7 @@
 
   .hx-month{background:var(--navy);color:#fff;font-weight:700;font-size:15px;text-align:center;letter-spacing:.02em;
     display:flex;align-items:center;justify-content:center;border-left:2px solid #fff;}
-  .hx-dnum,.hx-dlet{display:flex;align-items:center;justify-content:center;font-size:11px;color:#1A1F2B;
+  .hx-dnum,.hx-dlet{display:flex;align-items:center;justify-content:center;font-size:11px;overflow:hidden;letter-spacing:-.03em;color:#1A1F2B;
     border-right:1px solid #E1E6EE;background:#fff;}
   .hx-dnum{font-weight:700;border-bottom:1px solid #E1E6EE;}
   .hx-dlet{font-weight:500;color:#3C4658;font-size:10.5px;border-bottom:2px solid var(--navy);}
@@ -849,16 +849,16 @@ document.getElementById('btnPdf').addEventListener('click', ()=>{
 function esc(s){ return (s===null||s===undefined) ? '' : String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 const FULL_LEFT_COLS = [
-  {key:'n', label:'N°', width:44},
-  {key:'nave', label:'NAVES', width:160},
-  {key:'agencia', label:'AGENCIA', width:84},
-  {key:'cliente', label:'CLIENTE', width:128},
-  {key:'faena', label:'FAENA', width:86},
-  {key:'producto', label:'PRODUCTO', width:158},
-  {key:'tons', label:'TONS', width:64},
-  {key:'eta', label:'ETA', width:84},
-  {key:'etb', label:'ETB', width:84},
-  {key:'etd', label:'ETD', width:84},
+  {key:'n', label:'N°', width:38},
+  {key:'nave', label:'NAVES', width:150},
+  {key:'agencia', label:'AGENCIA', width:74},
+  {key:'cliente', label:'CLIENTE', width:118},
+  {key:'faena', label:'FAENA', width:78},
+  {key:'producto', label:'PRODUCTO', width:140},
+  {key:'tons', label:'TONS', width:58},
+  {key:'eta', label:'ETA', width:78},
+  {key:'etb', label:'ETB', width:78},
+  {key:'etd', label:'ETD', width:78},
 ];
 const CLIENT_LEFT_COLS = [
   {key:'n', label:'N°', width:40},
@@ -973,8 +973,8 @@ function buildSite(container, siteKey, siteLabel, vessels, rangeStart, rangeEnd,
 
   // Todo el período visible a la vez (como la lámina); si no cabe, columnas de 16 px con scroll horizontal.
   const scrollEl = el.querySelector('.gantt-scroll');
-  const availableWidth = Math.max(scrollEl.clientWidth - 22 - totalLeftWidth, 0);
-  const dayColPx = Math.min(60, Math.max(15, Math.floor(availableWidth / totalDays)));
+  const availableWidth = Math.max(scrollEl.clientWidth - 24 - totalLeftWidth, 0);
+  const dayColPx = Math.min(60, Math.max(12, Math.floor(availableWidth / totalDays)));
   grid.style.gridTemplateColumns = `${leftColsTemplate} repeat(${totalDays}, minmax(${dayColPx}px, 1fr))`;
   grid.style.gridTemplateRows = `34px 21px 19px repeat(${nRows}, 24px)`;
   grid.style.position = 'relative';
