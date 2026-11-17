@@ -815,12 +815,15 @@ document.getElementById('siteTabs').addEventListener('click', e=>{
 });
 document.querySelector('#siteTabs .tab[data-site="ambos"]').classList.add('active');
 
-monthSelect.addEventListener('change', render);
+// Al elegir un mes, el Gantt muestra solo ese período (sale de "Hasta última nave").
+function leaveLastMode(){ const sp=document.getElementById('spanSelect'); if(sp && sp.value==='last') sp.value='1'; }
+monthSelect.addEventListener('change', ()=>{ leaveLastMode(); render(); });
 
 function stepMonth(delta){
   if(monthSelect.value === 'all') return; // no adjacent month when viewing everything
   const idx = monthSelect.selectedIndex + delta;
   if(idx >= 1 && idx < monthSelect.options.length){ // skip index 0 ("TODOS LOS MESES")
+    leaveLastMode();
     monthSelect.selectedIndex = idx;
     render();
   }
