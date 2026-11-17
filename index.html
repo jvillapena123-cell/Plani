@@ -835,10 +835,10 @@ document.getElementById('spanSelect').addEventListener('change', render);
 function setDefaultRange(){
   let idx = months.findIndex(({y,m})=> y===today.getFullYear() && m===today.getMonth());
   if(idx<0) idx = Math.max(0, months.length-1);
-  const startIdx = Math.max(0, idx-1);
-  monthSelect.selectedIndex = startIdx + 1;
+  // Por defecto: solo el mes actual. "Hasta última nave" queda como opción en el selector de meses.
+  monthSelect.selectedIndex = idx + 1;
   const sp = document.getElementById('spanSelect');
-  if(sp) sp.value = 'last';
+  if(sp) sp.value = '1';
 }
 document.getElementById('btnToday').addEventListener('click', ()=>{
   setDefaultRange();
