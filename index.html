@@ -439,6 +439,7 @@
   .site-actions{display:flex;align-items:center;gap:14px;}
   .btn-site-img{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);color:#fff;
     border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:5px 11px;font:600 12px 'Poppins',sans-serif;cursor:pointer;}
+  #sitesContainer .site ~ .site .btn-site-img{display:none;}
   .btn-site-img:hover{background:rgba(255,255,255,.22);}
   .btn-site-img:disabled{opacity:.6;cursor:wait;}
   .btn-site-img svg{width:15px;height:15px;}
@@ -978,15 +979,16 @@ const IMG_SVG = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d
 // ---------- Descargar una sección (Sitio Norte / Sur) como imagen PNG ----------
 async function downloadSiteImage(btn){
   if(typeof html2canvas !== 'function'){ alert('No se pudo cargar el generador de imágenes. Revisa tu conexión e intenta de nuevo.'); return; }
-  const site = btn.closest('.site');
+  // Captura ambos sitios (Norte y Sur) en una sola imagen
+  const site = document.getElementById('sitesContainer');
   if(!site) return;
-  const scroll = site.querySelector('.gantt-scroll');
-  const prev = { overflow: scroll ? scroll.style.overflow : '', left: scroll ? scroll.scrollLeft : 0 };
+  const scrolls = [...site.querySelectorAll('.gantt-scroll')];
+  const prev = scrolls.map(sc=>({sc, overflow: sc.style.overflow, left: sc.scrollLeft}));
   btn.disabled = true;
   try{
     // Mostrar el período completo (sin scroll horizontal) durante la captura
-    if(scroll){ scroll.scrollLeft = 0; scroll.style.overflow = 'visible'; }
-    const fullW = Math.max(site.scrollWidth, scroll ? scroll.scrollWidth + 22 : 0);
+    scrolls.forEach(sc=>{ sc.scrollLeft = 0; sc.style.overflow = 'visible'; });
+    const fullW = Math.max(site.scrollWidth, ...scrolls.map(sc=> sc.scrollWidth + 22));
     const canvas = await html2canvas(site, {
       backgroundColor: '#FFFFFF',
       scale: Math.max(2, window.devicePixelRatio || 1),
@@ -1004,7 +1006,7 @@ async function downloadSiteImage(btn){
     });
     const d = new Date();
     const stamp = d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
-    const name = `Planificacion_${(btn.dataset.label||'Sitio').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_|_$/g,'')}_${stamp}.png`;
+    const name = `Planificacion_Naviera_HTP_${stamp}.png`;
     const blob = await new Promise(r=> canvas.toBlob(r, 'image/png'));
     const file = new File([blob], name, {type:'image/png'});
     // En iPad/iPhone: hoja de compartir (Guardar imagen / WhatsApp / Correo). En PC: descarga directa.
@@ -1020,7 +1022,7 @@ async function downloadSiteImage(btn){
     console.error(err);
     alert('No se pudo generar la imagen: ' + (err && err.message ? err.message : err));
   }finally{
-    if(scroll){ scroll.style.overflow = prev.overflow; scroll.scrollLeft = prev.left; }
+    prev.forEach(p=>{ p.sc.style.overflow = p.overflow; p.sc.scrollLeft = p.left; });
     btn.disabled = false;
   }
 }
@@ -1047,7 +1049,7 @@ function buildSite(container, siteKey, siteLabel, vessels, rangeStart, rangeEnd,
       <div class="site-title">${SHIP_SVG}${esc(siteLabel)}</div>
       <div class="site-actions">
         <div class="site-count">${relevant.length} nave${relevant.length===1?'':'s'}</div>
-        <button type="button" class="btn-site-img" data-site="${siteKey}" data-label="${esc(siteLabel)}" data-html2canvas-ignore="true" title="Descargar esta sección como imagen PNG">${IMG_SVG}Imagen</button>
+        <button type="button" class="btn-site-img" data-site="${siteKey}" data-label="${esc(siteLabel)}" data-html2canvas-ignore="true" title="Descargar Sitio Norte y Sur como imagen PNG">${IMG_SVG}Imagen</button>
       </div>
     </div>`;
 
