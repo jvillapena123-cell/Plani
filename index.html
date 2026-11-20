@@ -1850,16 +1850,16 @@ function tcOpen(){
 }
 function tcClose(){ document.getElementById('tonsModalBackdrop').style.display='none'; }
 
+const TONS_PASSWORD = 'HTP2026';
 document.getElementById('btnTonsFix').addEventListener('click', ()=>{
-  if(!window.__editMode){
-    const p=window.prompt('Ingresa la clave para corregir toneladas:');
-    if(p===null) return;
-    if(p.trim().toUpperCase()!==EDIT_PASSWORD.toUpperCase()){
-      const un=document.getElementById('uploadNotice');
-      un.className='notice error'; un.style.display='block';
-      un.innerHTML='<b>Clave incorrecta.</b> No se abrió la corrección de toneladas.';
-      return;
-    }
+  // Siempre pide la clave, aunque el modo edición esté activo.
+  const p=window.prompt('Ingresa la clave de acceso para corregir toneladas:');
+  if(p===null) return;
+  if(p.trim().toUpperCase()!==TONS_PASSWORD.toUpperCase()){
+    const un=document.getElementById('uploadNotice');
+    un.className='notice error'; un.style.display='block';
+    un.innerHTML='<b>Clave incorrecta.</b> No se abrió la corrección de toneladas.';
+    return;
   }
   tcOpen();
 });
