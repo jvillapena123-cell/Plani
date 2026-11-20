@@ -529,8 +529,11 @@
   .hx-legend .it{display:flex;align-items:center;gap:8px;}
   .hx-legend .sw{width:30px;height:18px;border-radius:5px;display:inline-block;}
   .hx-legend .sw.hoy{width:9px;border-radius:5px;background:var(--hoy);}
+  .hx-summary .hx-legend{flex:0 0 100%;justify-content:center;border-right:none;padding-right:0;margin:0 0 4px;font-size:15px;gap:22px;}
   .hx-kpi.hx-kpi-op{background:#E3F4EA;color:#14703F;}
   .hx-kpi.hx-kpi-op .s{color:#2F7A50;}
+  .hx-kpi.hx-kpi-proy{background:#FDEFE5;color:#B4561C;}
+  .hx-kpi.hx-kpi-proy .s{color:#A0582A;}
   .hx-kpi{display:flex;align-items:center;gap:12px;background:#E9EEF5;border-radius:10px;padding:8px 16px;min-height:60px;
     color:var(--navy);}
   .hx-kpi svg{flex:0 0 auto;width:24px;height:24px;}
@@ -1346,6 +1349,10 @@ function renderSummary(shown, rangeStart, rangeEnd){
       <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16.5 9"/></svg>
       <div><div class="v">${opT.toLocaleString('es-CL',{maximumFractionDigits:0})} Tons</div>
       <div class="s">Operadas · ${opN} zarpada${opN===1?'':'s'}</div></div></div>
+    <div class="hx-kpi hx-kpi-proy" title="Naves que aún no zarpan: toneladas programadas">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      <div><div class="v">${(tons-opT).toLocaleString('es-CL',{maximumFractionDigits:0})} Tons</div>
+      <div class="s">Proyectadas · ${count-opN} por operar</div></div></div>
     <div class="hx-kpi">${CAL_SVG.replace('width="22" height="22"','width="30" height="30"')}
       <div><div class="v">${period}</div><div class="s">Actualizado ${updLabel}</div></div></div>`;
   const lu = document.getElementById('lastUpdate');
