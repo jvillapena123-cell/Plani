@@ -1316,6 +1316,7 @@ function renderSummary(shown, rangeStart, rangeEnd){
   if(!box) return;
   const count = shown.length;
   const tons = shown.reduce((s,v)=> s + (Number(v.tons)||0), 0);
+  const realT = shown.reduce((s,v)=> s + (v.real ? (Number(v.tons)||0) : 0), 0);   // toneladas confirmadas con la Estadística Operacional
   let lastEnd = rangeEnd;
   const p0 = titleCase(MES3[rangeStart.getMonth()]) + ' ' + rangeStart.getFullYear();
   const p1 = titleCase(MES3[lastEnd.getMonth()]) + ' ' + lastEnd.getFullYear();
@@ -1334,7 +1335,9 @@ function renderSummary(shown, rangeStart, rangeEnd){
     <div class="hx-kpi"><svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M5 13.5V9.5h14v4" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 9.5V6.5h6v3M12 4v2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M2.5 14h19l-2.6 4.2H5.1z" fill="currentColor"/><path d="M2 20.6c1.6 0 1.6-.9 3.3-.9s1.6.9 3.3.9 1.6-.9 3.3-.9 1.6.9 3.3.9 1.6-.9 3.3-.9 1.6.9 3.3.9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       <div class="v">${count} Nave${count===1?'':'s'}</div></div>
     <div class="hx-kpi"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="8" y="3" width="8" height="7" rx=".6"/><rect x="3" y="12" width="8" height="8" rx=".6"/><rect x="13" y="12" width="8" height="8" rx=".6"/></svg>
-      <div class="v">${tons.toLocaleString('es-CL',{maximumFractionDigits:0})} Tons</div></div>
+      ${realT>0 ? `<div><div class="v">${realT.toLocaleString('es-CL',{maximumFractionDigits:0})} Tons operadas</div>
+        <div class="s">+ ${(tons-realT).toLocaleString('es-CL',{maximumFractionDigits:0})} t programadas · Total ${tons.toLocaleString('es-CL',{maximumFractionDigits:0})} t</div></div>`
+        : `<div class="v">${tons.toLocaleString('es-CL',{maximumFractionDigits:0})} Tons</div>`}</div>
     <div class="hx-kpi">${CAL_SVG.replace('width="22" height="22"','width="30" height="30"')}
       <div><div class="v">${period}</div><div class="s">Actualizado ${updLabel}</div></div></div>`;
   const lu = document.getElementById('lastUpdate');
@@ -1760,11 +1763,11 @@ function tcMatch(stats){
     return { x, tons:t.v==null?null:Math.round(t.v*1000)/1000, year:d.getFullYear(), date:d,
              site: x.sitio.startsWith('NORTE') ? 'norte' : 'sur', add:true };
   }).filter(u=>u.tons!=null);
-  const planiOnly=[];
+  const planiOnly=[], tcHoy=(()=>{const n=new Date(); return new Date(n.getFullYear(),n.getMonth(),n.getDate());})();
   ['norte','sur'].forEach(site=>(DATA[site]||[]).forEach(v=>{
     if(usedV.has(v) || v.tons==null) return;
     const d=parseDate(v.eta); if(!d || isNaN(d)) return;
-    planiOnly.push({site, n:v.n, nave:v.nave, faena:v.faena, tons:Number(v.tons), eta:d, year:d.getFullYear(), del:false});
+    planiOnly.push({site, n:v.n, nave:v.nave, faena:v.faena, tons:Number(v.tons), eta:d, year:d.getFullYear(), del:d<tcHoy, fut:d>=tcHoy});
   }));
   planiOnly.sort((a,b)=>a.eta-b.eta);
   return {res, unmatched, planiOnly};
@@ -1834,12 +1837,12 @@ function tcRender(stats, match){
   const dl=TC_DEL.map((d,i)=>({d,i})).filter(o=>o.d.year===TC_YEAR);
   if(dl.length){
     html+=`<h4 class="tc-h4">En la planificación pero no en el Excel (${TC_YEAR})</h4>
-      <div class="tc-summary" style="margin-top:0;">Normalmente son naves programadas que aún no operan. Márcalas solo si no recalaron.</div>
+      <div class="tc-summary" style="margin-top:0;">Las que ya pasaron su ETA y no están en el Excel vienen marcadas para quitar. Las futuras quedan como <b>programadas</b> y no se cuentan en las toneladas operadas.</div>
       <div class="tc-wrap" style="max-height:26vh;"><table class="tc-table"><thead><tr>
         <th>Quitar</th><th>Sitio</th><th>Nave</th><th>Faena</th><th>ETA</th><th class="num">Tons</th></tr></thead><tbody>`;
     dl.forEach(({d,i})=>{
       html+=`<tr><td><input type="checkbox" class="tc-del" data-i="${i}" ${d.del?'checked':''}></td><td>${d.site==='norte'?'Norte':'Sur'}</td>
-        <td><b>${esc(d.nave)}</b></td><td>${esc(d.faena||'')}</td><td>${tcFmtDate(d.eta)}</td><td class="num">${tcFmtT(d.tons)}</td></tr>`;
+        <td><b>${esc(d.nave)}</b></td><td>${esc(d.faena||'')}</td><td>${tcFmtDate(d.eta)}${d.fut?'<span class="tc-sub">programada</span>':''}</td><td class="num">${tcFmtT(d.tons)}</td></tr>`;
     });
     html+=`</tbody></table></div>`;
   }
@@ -1909,7 +1912,9 @@ function tcUpdateCount(){
   btn.disabled=!(n+a); btn.style.opacity=(n+a)?'1':'.5';
   const parts=[]; if(n) parts.push(n===1?'1 corrección':`${n} correcciones`); if(a) parts.push(`agregar ${a} nave${a===1?'':'s'}`);
   const q=tcDelList().length; if(q) parts.push(`quitar ${q}`);
-  btn.disabled=!(n+a+q); btn.style.opacity=(n+a+q)?'1':'.5';
+  const mk=TC_ROWS.filter(r=>!r.differs && !((DATA[r.site]||[]).find(x=>x.n===r.n && x.nave===r.nave)||{}).real).length;
+  if(mk) parts.push(`marcar ${mk} como operada${mk===1?'':'s'}`);
+  btn.disabled=!(n+a+q+mk); btn.style.opacity=(n+a+q+mk)?'1':'.5';
   btn.textContent = parts.length ? 'Aplicar: '+parts.join(' + ') : 'Aplicar correcciones';
   tcTotals();
   document.getElementById('tonsCount').textContent='';
@@ -1971,10 +1976,15 @@ document.getElementById('tonsInput').addEventListener('change', e=>{ tcReadFile(
 
 document.getElementById('tonsApply').addEventListener('click', ()=>{
   const sel=TC_ROWS.filter(r=>r.sel && r.nuevo!=null);
-  let ok=0;
+  let ok=0, marked=0;
   sel.forEach(r=>{
     const v=(DATA[r.site]||[]).find(x=>x.n===r.n && x.nave===r.nave);
-    if(v){ v.tons=Math.round(r.nuevo*1000)/1000; ok++; }
+    if(v){ v.tons=Math.round(r.nuevo*1000)/1000; v.real=true; ok++; }
+  });
+  // Las que ya coincidían con el Excel también quedan como operadas
+  TC_ROWS.filter(r=>!r.differs).forEach(r=>{
+    const v=(DATA[r.site]||[]).find(x=>x.n===r.n && x.nave===r.nave);
+    if(v && !v.real){ v.real=true; marked++; }
   });
   const iso=d=> d ? d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'T00:00:00' : null;
   let removed=0;
@@ -1990,16 +2000,17 @@ document.getElementById('tonsApply').addEventListener('click', ()=>{
     DATA[site].push({ n, nave:x.nave.toUpperCase(), agencia:'', cliente:(x.cliente||'').toUpperCase(),
       faena:(x.proc||'').toUpperCase(), producto:(x.prod||'').toUpperCase(), tons:u.tons,
       eta:iso(x.dArr), etb:iso(x.dAtr||x.dArr), etd:iso(x.dZar||x.dAtr||x.dArr), color:null,
-      eta_h1:null, eta_h2:null, etb_h1:null, etb_h2:null, etd_h1:null, etd_h2:null });
+      eta_h1:null, eta_h2:null, etb_h1:null, etb_h2:null, etd_h1:null, etd_h2:null, real:true });
     added++;
   });
   tcClose();
-  if(ok || added || removed) persistAndRefresh();
+  if(ok || added || removed || marked) persistAndRefresh();
   const un=document.getElementById('uploadNotice');
   un.className='notice success'; un.style.display='block';
   un.innerHTML=`<b>Planificación actualizada.</b> Se corrigieron las toneladas de ${ok} nave${ok===1?'':'s'}`+
     (added ? `, se agregaron ${added} nave${added===1?'':'s'} desde el Excel` : '')+
-    (removed ? ` y se quitaron ${removed}` : '')+'.';
+    (removed ? ` y se quitaron ${removed}` : '')+'.'+
+    (marked ? ` ${marked} nave${marked===1?' quedó':'s quedaron'} marcada${marked===1?'':'s'} como operada${marked===1?'':'s'}.` : '');
   setTimeout(()=>{ un.style.display='none'; }, 8000);
 });
 
@@ -2373,6 +2384,8 @@ document.getElementById('vesselForm').addEventListener('submit', (e)=>{
   if(modalMode==='add'){
     DATA[newSite].push(record);
   } else {
+    const old=DATA[modalSite].find(x=>x.n===modalOrigN);
+    if(old && old.real && Number(old.tons)===record.tons) record.real=true;
     // remove from original site (in case the site was changed) then push updated record
     DATA[modalSite] = DATA[modalSite].filter(x=>x.n!==modalOrigN);
     DATA[newSite].push(record);
