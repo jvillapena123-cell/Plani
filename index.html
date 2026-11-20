@@ -523,17 +523,18 @@
     font-style:italic;font-size:12.5px;color:#4A5568;border-bottom:1px solid #EEF1F5;white-space:nowrap;overflow:hidden;z-index:2;}
   .hx-out b{font-style:normal;color:var(--navy);margin-right:6px;font-size:10px;}
 
-  .hx-summary{display:flex;align-items:center;justify-content:center;gap:34px;flex-wrap:wrap;margin:26px 0 0;}
-  .hx-legend{display:flex;align-items:center;gap:32px;flex-wrap:wrap;font-size:18px;color:#1A1F2B;padding-right:34px;
+  .hx-summary{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:26px 0 0;}
+  .hx-legend{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:14px;color:#1A1F2B;padding-right:14px;margin-right:4px;
     border-right:2px solid var(--navy);min-height:56px;}
-  .hx-legend .it{display:flex;align-items:center;gap:12px;}
-  .hx-legend .sw{width:38px;height:22px;border-radius:5px;display:inline-block;}
+  .hx-legend .it{display:flex;align-items:center;gap:8px;}
+  .hx-legend .sw{width:30px;height:18px;border-radius:5px;display:inline-block;}
   .hx-legend .sw.hoy{width:9px;border-radius:5px;background:var(--hoy);}
   .hx-kpi.hx-kpi-op{background:#E3F4EA;color:#14703F;}
-  .hx-kpi{display:flex;align-items:center;gap:16px;background:#E9EEF5;border-radius:10px;padding:10px 30px;min-height:60px;
+  .hx-kpi.hx-kpi-op .s{color:#2F7A50;}
+  .hx-kpi{display:flex;align-items:center;gap:12px;background:#E9EEF5;border-radius:10px;padding:8px 16px;min-height:60px;
     color:var(--navy);}
-  .hx-kpi svg{flex:0 0 auto;}
-  .hx-kpi .v{font-size:24px;font-weight:700;line-height:1.1;}
+  .hx-kpi svg{flex:0 0 auto;width:24px;height:24px;}
+  .hx-kpi .v{font-size:21px;font-weight:700;line-height:1.1;}
   .hx-kpi .s{font-size:13px;color:#4A5568;}
   .hx-wave{display:block;width:92%;height:20px;margin:6px auto 0;}
 
@@ -1343,8 +1344,8 @@ function renderSummary(shown, rangeStart, rangeEnd){
       <div><div class="v">${tons.toLocaleString('es-CL',{maximumFractionDigits:0})} Tons</div><div class="s">Total del período</div></div></div>
     <div class="hx-kpi hx-kpi-op" title="Naves cuyo zarpe (ETD) es hoy o anterior">
       <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16.5 9"/></svg>
-      <div><div class="v">${opT.toLocaleString('es-CL',{maximumFractionDigits:0})} Tons operadas</div>
-      <div class="s">${opN} nave${opN===1?'':'s'} que ya zarparon (al ${fmtDash(today)})</div></div></div>
+      <div><div class="v">${opT.toLocaleString('es-CL',{maximumFractionDigits:0})} Tons</div>
+      <div class="s">Operadas · ${opN} zarpada${opN===1?'':'s'}</div></div></div>
     <div class="hx-kpi">${CAL_SVG.replace('width="22" height="22"','width="30" height="30"')}
       <div><div class="v">${period}</div><div class="s">Actualizado ${updLabel}</div></div></div>`;
   const lu = document.getElementById('lastUpdate');
