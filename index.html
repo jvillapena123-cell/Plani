@@ -206,7 +206,7 @@
     .masthead img{height:32px !important;}
     .masthead > div:last-child{width:100%;align-items:stretch;}
     .masthead > div:last-child > div{width:100%;justify-content:space-between;}
-    #btnEditMode, #btnUploadExcel{flex:1;justify-content:center;font-size:11.5px;padding:9px 10px;}
+    #btnEditMode, #btnUploadExcel, #btnTonsFix{flex:1;justify-content:center;font-size:11.5px;padding:9px 10px;}
     .controls{flex-direction:column;align-items:stretch;gap:10px;}
     .tabs{justify-content:center;}
     .filters{justify-content:center;row-gap:8px;}
@@ -319,6 +319,34 @@
   .modal-btn.ghost:hover{border-color:var(--text-dim);}
   .modal-btn.danger{background:none;border-color:rgba(214,65,74,.4);color:var(--red);}
   .modal-btn.danger:hover{background:var(--red-dim);}
+
+  /* ---- Ventana: corregir toneladas desde Estadística Operacional ---- */
+  .modal.modal-wide{max-width:980px;}
+  #tonsBody{padding:16px 22px 20px;}
+  .tc-drop{border:2px dashed var(--border-soft);border-radius:12px;padding:22px;text-align:center;color:var(--text-dim);font-size:13px;cursor:pointer;transition:border-color .12s,background .12s;}
+  .tc-drop:hover,.tc-drop.over{border-color:var(--teal);background:var(--teal-dim);}
+  .tc-drop b{color:var(--text);}
+  .tc-summary{font-size:12.5px;color:var(--text-dim);margin:12px 0 8px;line-height:1.5;}
+  .tc-summary b{color:var(--text);}
+  .tc-tools{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--text-dim);margin-bottom:8px;}
+  .tc-tools label{display:inline-flex;align-items:center;gap:6px;cursor:pointer;}
+  .tc-wrap{max-height:52vh;overflow:auto;border:1px solid var(--border);border-radius:10px;}
+  table.tc-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  .tc-table th{position:sticky;top:0;background:#F1F3F7;color:var(--text-dim);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.03em;text-align:left;padding:8px 8px;border-bottom:1px solid var(--border);white-space:nowrap;}
+  .tc-table td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  .tc-table td:nth-child(5){white-space:nowrap;}
+  .tc-table td.num,.tc-table th.num{text-align:right;font-variant-numeric:tabular-nums;}
+  .tc-table tr.same td{color:var(--text-faint);}
+  .tc-table input[type=number]{width:110px;font-family:inherit;font-size:12.5px;padding:5px 7px;border-radius:7px;border:1px solid var(--border-soft);text-align:right;}
+  .tc-up{color:var(--green);font-weight:700;}
+  .tc-down{color:var(--red);font-weight:700;}
+  .tc-sub{display:block;font-size:10.5px;color:var(--text-faint);}
+  .tc-warn{display:block;margin-top:3px;font-size:10.5px;color:#9A5B12;background:#FFF4E5;border-radius:6px;padding:3px 6px;}
+  .tc-sum{margin-left:4px;font-family:inherit;font-size:10.5px;font-weight:700;color:var(--teal);background:#fff;border:1px solid var(--teal);border-radius:5px;padding:1px 6px;cursor:pointer;}
+  .tc-empty{padding:18px;text-align:center;color:var(--text-faint);font-size:13px;}
+  .tc-unmatched{margin-top:10px;font-size:12px;color:var(--text-dim);}
+  .tc-unmatched summary{cursor:pointer;font-weight:600;}
+  #tonsBody .modal-actions{margin-top:14px;}
 
   @media print{
     .modal-backdrop{ display:none !important; }
@@ -516,7 +544,7 @@
     .hx-brand img{height:34px !important;} .hx-vdiv{height:36px;}
     .hx-title{font-size:23px;margin-bottom:2px;} .hx-sub{font-size:12.5px;gap:6px;} .hx-sub svg{width:16px;height:16px;}
     .hx-toolbar{justify-content:stretch;} .hx-toolbar > div{width:100%;} .hx-toolbar .meta{display:block;text-align:left;}
-    #btnEditMode,#btnUploadExcel{flex:1;justify-content:center;}
+    #btnEditMode,#btnUploadExcel,#btnTonsFix{flex:1;justify-content:center;}
     .site-head{padding:9px 16px;border-radius:14px 14px 0 0;}
     .site-title{font-size:15px;gap:10px;} .site-title svg{width:20px;height:20px;}
     .hx-summary{gap:12px;} .hx-legend{border-right:none;padding-right:0;font-size:12.5px;gap:12px;justify-content:center;min-height:0;}
@@ -559,6 +587,10 @@
       <button type="button" class="btn-upload" id="btnUploadExcel">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="flex:0 0 auto;"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Cargar Excel
+      </button>
+      <button type="button" class="btn-upload" id="btnTonsFix" title="Actualiza las toneladas embarcadas y descargadas desde la Estadística Operacional de Naves">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="flex:0 0 auto;"><path d="M4 7h16M4 12h10M4 17h7M17 14l2 2 3-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Corregir toneladas
       </button>
     </div>
     <input type="file" id="excelInput" accept=".xlsx,.xls" style="display:none;">
@@ -698,6 +730,31 @@
         <button type="submit" class="modal-btn primary">Guardar</button>
       </div>
     </form>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="tonsModalBackdrop" style="display:none;">
+  <div class="modal modal-wide">
+    <div class="modal-head">
+      <h3>Corregir toneladas embarcadas y descargadas</h3>
+      <button type="button" class="modal-close" id="tonsClose">&times;</button>
+    </div>
+    <div id="tonsBody">
+      <div class="tc-drop" id="tonsDrop">
+        <b>Sube la Estadística Operacional de Naves (.xlsx)</b><br>
+        Haz clic aquí o arrastra el archivo. Se leen las columnas <b>Toneladas embarcadas</b> y <b>Tonelaje descargado</b>
+        y se comparan con las naves de la planificación (por nombre y fecha de arribo).
+        <div id="tonsFileName" style="margin-top:8px;font-weight:600;color:var(--teal);"></div>
+      </div>
+      <input type="file" id="tonsInput" accept=".xlsx,.xls,.xlsm" style="display:none;">
+      <div id="tonsResult"></div>
+      <div class="modal-actions">
+        <span id="tonsCount" style="font-size:12.5px;color:var(--text-dim);"></span>
+        <span style="flex:1;"></span>
+        <button type="button" id="tonsCancel" class="modal-btn ghost">Cancelar</button>
+        <button type="button" id="tonsApply" class="modal-btn primary" disabled style="opacity:.5;">Aplicar correcciones</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1554,6 +1611,281 @@ document.getElementById('excelInput').addEventListener('change', function(e){
     }
   };
   reader.readAsArrayBuffer(file);
+});
+
+// ---------- Ventana: corregir toneladas (embarcadas / descargadas) desde la Estadística Operacional de Naves ----------
+const TC_TOL_DAYS = 20;       // diferencia máxima de días entre la ETA planificada y el arribo/atraque real
+const TC_MIN_NAME = 0.8;      // similitud mínima de nombre (tolera errores de tipeo: AGHYA/AGHIA, DRAKO/DRACO)
+let TC_ROWS = [];
+
+function tcHead(s){ return String(s==null?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/\s+/g,' ').trim(); }
+function tcName(s){
+  return tcHead(s).replace(/\(.*?\)/g,' ').replace(/\b(MN|MV|M\/N|M\/V|BARCAZA)\b/g,' ')
+    .replace(/[^A-Z0-9 ]/g,' ').replace(/\s+\d+\s*$/,'').replace(/\s+/g,' ').trim();
+}
+function tcLev(a,b){
+  const m=a.length, n=b.length; if(!m) return n; if(!n) return m;
+  let prev=Array.from({length:n+1},(_,j)=>j);
+  for(let i=1;i<=m;i++){
+    const cur=[i];
+    for(let j=1;j<=n;j++) cur[j]=Math.min(prev[j]+1, cur[j-1]+1, prev[j-1]+(a[i-1]===b[j-1]?0:1));
+    prev=cur;
+  }
+  return prev[n];
+}
+function tcNameScore(a,b){
+  a=a.replace(/ /g,''); b=b.replace(/ /g,'');
+  if(!a||!b) return 0; if(a===b) return 1;
+  return 1 - tcLev(a,b)/Math.max(a.length,b.length);
+}
+function tcNum(v){
+  if(typeof v==='number') return isFinite(v) ? v : null;
+  if(v==null) return null;
+  const s=String(v).replace(/ /g,' ').trim();
+  if(!/\d/.test(s)) return null;                       // " ---", " -", vacío, espacio duro
+  let t=s.replace(/[^\d.,-]/g,'');
+  if(t.includes(',') && t.includes('.')) t=t.replace(/\./g,'').replace(',','.');   // 1.234,5
+  else if(t.includes(',')) t=t.replace(',','.');
+  const n=Number(t); return isNaN(n) ? null : n;
+}
+function tcDate(v){
+  if(v instanceof Date && !isNaN(v)) return new Date(v.getFullYear(), v.getMonth(), v.getDate());
+  if(typeof v==='number' && v>20000 && XLSX.SSF){ const d=XLSX.SSF.parse_date_code(v); if(d) return new Date(d.y,d.m-1,d.d); }
+  return null;
+}
+function tcFmtDate(d){ return d ? String(d.getDate()).padStart(2,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+d.getFullYear() : '—'; }
+function tcFmtT(n){ return n==null ? '—' : Number(n).toLocaleString('es-CL',{maximumFractionDigits:3}); }
+
+// Lee la hoja que tenga los encabezados "Nave" + "Toneladas embarcadas" / "Tonelaje descargado"
+function tcParseStats(wb){
+  for(const name of wb.SheetNames){
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[name], {header:1, defval:null, raw:true});
+    for(let r=0; r<Math.min(rows.length,40); r++){
+      const H=(rows[r]||[]).map(tcHead);
+      const col=re=>H.findIndex(h=>re.test(h));
+      const cNave=col(/^NAVES?$/), cEmb=col(/TONELA(DAS|JE) EMBARCAD/), cDes=col(/TONELA(DAS|JE) DESCARGAD/);
+      if(cNave<0 || (cEmb<0 && cDes<0)) continue;
+      const c={proc:col(/^PROCESO$|^FAENA$/), sitio:col(/^SITIO$/), arribo:col(/^ARRIBO$/), pob:col(/^POB$/),
+               linea:col(/^PRIMERA LINEA$/), ini:col(/^INICIO/), zarpe:col(/^ZARPE$/), prod:col(/^PRODUCTO$/)};
+      const out=[];
+      for(let d=r+1; d<rows.length; d++){
+        const row=rows[d]||[];
+        const nave=row[cNave]==null ? '' : String(row[cNave]).replace(/ /g,' ').trim();
+        if(!nave) continue;
+        const emb=cEmb>=0 ? tcNum(row[cEmb]) : null, des=cDes>=0 ? tcNum(row[cDes]) : null;
+        if(emb==null && des==null) continue;
+        const dates=['arribo','pob','linea','ini','zarpe'].map(k=>c[k]>=0 ? tcDate(row[c[k]]) : null).filter(Boolean);
+        if(!dates.length) continue;
+        out.push({ fila:d+1, nave, key:tcName(nave), emb, des,
+          proc: c.proc>=0 && row[c.proc]!=null ? String(row[c.proc]).trim() : '',
+          prod: c.prod>=0 && row[c.prod]!=null ? String(row[c.prod]).trim() : '',
+          sitio: c.sitio>=0 ? tcHead(row[c.sitio]) : '', dates });
+      }
+      return {sheet:name, rows:out};
+    }
+  }
+  return null;
+}
+
+// Toneladas que corresponden según la faena planificada
+function tcTonsFor(faena, x){
+  const F=tcHead(faena);
+  const isE=/EMBARQUE|CARGA/.test(F) && !/DESCARGA/.test(F), isD=/DESCARGA/.test(F) && !/EMBARQUE/.test(F);
+  if(isE) return {v: x.emb!=null ? x.emb : x.des, tipo: x.emb!=null ? 'Embarcadas' : 'Descargadas'};
+  if(isD) return {v: x.des!=null ? x.des : x.emb, tipo: x.des!=null ? 'Descargadas' : 'Embarcadas'};
+  if(x.emb!=null && x.des!=null) return {v:x.emb+x.des, tipo:'Emb. + Desc.'};
+  return {v: x.des!=null ? x.des : x.emb, tipo: x.des!=null ? 'Descargadas' : 'Embarcadas'};
+}
+
+function tcMatch(stats){
+  const pairs=[];
+  ['norte','sur'].forEach(site=>{
+    (DATA[site]||[]).forEach(v=>{
+      const pk=tcName(v.nave); if(!pk) return;
+      const pDates=[v.eta,v.etb].map(parseDate).filter(d=>d && !isNaN(d)).map(d=>new Date(d.getFullYear(),d.getMonth(),d.getDate()));
+      if(!pDates.length) return;
+      stats.rows.forEach((x,i)=>{
+        const ns=tcNameScore(pk,x.key); if(ns<TC_MIN_NAME) return;
+        let dd=Infinity;
+        pDates.forEach(p=>x.dates.forEach(e=>{ dd=Math.min(dd, Math.abs(e-p)/86400000); }));
+        if(dd>TC_TOL_DAYS) return;
+        const siteOk = !x.sitio || x.sitio.startsWith(site.toUpperCase());
+        pairs.push({site, v, x, i, ns, dd, score: ns*100 - dd + (siteOk?3:0)});
+      });
+    });
+  });
+  pairs.sort((a,b)=>b.score-a.score);
+  const usedV=new Set(), usedX=new Set(), res=[];
+  pairs.forEach(p=>{
+    if(usedV.has(p.v) || usedX.has(p.i)) return;
+    usedV.add(p.v); usedX.add(p.i);
+    const t=tcTonsFor(p.v.faena, p.x);
+    if(t.v==null) return;
+    const nuevo=Math.round(t.v*1000)/1000;
+    const actual=p.v.tons==null ? null : Number(p.v.tons);
+    const differs = actual==null || Math.abs(nuevo-actual)>=0.5;
+    res.push({ site:p.site, n:p.v.n, nave:p.v.nave, faena:p.v.faena, eta:parseDate(p.v.eta),
+      actual, nuevo, tipo:t.tipo, xNave:p.x.nave, xFila:p.x.fila, xProd:p.x.prod, differs, sel:differs });
+  });
+  // Recaladas partidas: otra fila de la misma nave en el Excel, a menos de 7 días y sin otra nave planificada
+  res.forEach(r=>{
+    const xi=stats.rows.findIndex(x=>x.fila===r.xFila), x=stats.rows[xi];
+    const sibs=stats.rows.filter((y,j)=>j!==xi && !usedX.has(j) && tcNameScore(x.key,y.key)>=TC_MIN_NAME &&
+      y.dates.some(a=>x.dates.some(b=>Math.abs(a-b)/86400000<=7)));
+    if(!sibs.length) return;
+    let sum=r.nuevo;
+    sibs.forEach(y=>{ const t=tcTonsFor(r.faena,y); if(t.v!=null) sum+=t.v; });
+    r.sibs=sibs.map(y=>({fila:y.fila, v:tcTonsFor(r.faena,y).v}));
+    r.sumVal=Math.round(sum*1000)/1000;
+    r.sel=false;            // requiere revisión: puede ser una sola estadía registrada en dos filas
+  });
+  res.sort((a,b)=>(a.eta||0)-(b.eta||0));
+  const unmatched=stats.rows.filter((x,i)=>!usedX.has(i));
+  return {res, unmatched};
+}
+
+function tcRender(stats, match){
+  const box=document.getElementById('tonsResult');
+  TC_ROWS=match.res;
+  const nDiff=TC_ROWS.filter(r=>r.differs).length;
+  const showAll=document.getElementById('tcShowAll') ? document.getElementById('tcShowAll').checked : false;
+  const rows=TC_ROWS.map((r,i)=>({r,i})).filter(o=>showAll || o.r.differs);
+  let html=`<div class="tc-summary">Hoja <b>${esc(stats.sheet)}</b>: ${stats.rows.length} recaladas con tonelaje.
+    <b>${TC_ROWS.length}</b> coinciden con naves de la planificación; <b>${nDiff}</b> tienen toneladas distintas.</div>
+    <div class="tc-tools">
+      <label><input type="checkbox" id="tcShowAll" ${showAll?'checked':''}> Mostrar también las que ya coinciden</label>
+      <label><input type="checkbox" id="tcAll"> Seleccionar todas las visibles</label>
+    </div>`;
+  if(!rows.length){
+    html+=`<div class="tc-wrap"><div class="tc-empty">${TC_ROWS.length ? 'Todas las toneladas de la planificación ya coinciden con el Excel.' : 'No se encontraron naves de la planificación en este Excel.'}</div></div>`;
+  }else{
+    html+=`<div class="tc-wrap"><table class="tc-table"><thead><tr>
+      <th></th><th>Sitio</th><th>Nave (planificación)</th><th>Faena</th><th>ETA</th>
+      <th class="num">Tons actual</th><th>Nave en Excel</th><th class="num">Tons Excel</th><th class="num">Diferencia</th>
+      </tr></thead><tbody>`;
+    rows.forEach(({r,i})=>{
+      const diff=r.actual==null ? null : r.nuevo-r.actual;
+      const dTxt=diff==null ? 'nuevo' : (diff>0?'+':'')+tcFmtT(diff);
+      const dCls=diff==null||diff>0 ? 'tc-up' : (diff<0 ? 'tc-down' : '');
+      html+=`<tr class="${r.differs?'':'same'}">
+        <td><input type="checkbox" class="tc-sel" data-i="${i}" ${r.sel?'checked':''}></td>
+        <td>${r.site==='norte'?'Norte':'Sur'}</td>
+        <td><b>${esc(r.nave)}</b></td>
+        <td>${esc(r.faena||'')}</td>
+        <td>${tcFmtDate(r.eta)}</td>
+        <td class="num">${tcFmtT(r.actual)}</td>
+        <td>${esc(r.xNave)}<span class="tc-sub">Fila ${r.xFila} · ${esc(r.tipo)}${r.xProd?' · '+esc(r.xProd):''}</span>${r.sibs?`<span class="tc-warn">Otra recalada en ${r.sibs.map(y=>'fila '+y.fila+' ('+tcFmtT(y.v)+' t)').join(', ')}. Suma: ${tcFmtT(r.sumVal)} t <button type="button" class="tc-sum" data-i="${i}">Usar suma</button></span>`:''}</td>
+        <td class="num"><input type="number" step="any" min="0" class="tc-val" data-i="${i}" value="${r.nuevo}"></td>
+        <td class="num ${dCls}" data-diff="${i}">${dTxt}</td>
+      </tr>`;
+    });
+    html+=`</tbody></table></div>`;
+  }
+  if(match.unmatched.length){
+    html+=`<details class="tc-unmatched"><summary>${match.unmatched.length} recaladas del Excel sin nave equivalente en la planificación</summary>
+      <div style="margin-top:6px;line-height:1.6;">${match.unmatched.map(x=>esc(x.nave)+' ('+tcFmtDate(x.dates[0])+')').join(' · ')}</div></details>`;
+  }
+  box.innerHTML=html;
+
+  document.getElementById('tcShowAll').addEventListener('change', ()=>tcRender(stats, match));
+  const all=document.getElementById('tcAll');
+  all.addEventListener('change', ()=>{
+    box.querySelectorAll('.tc-sel').forEach(cb=>{ cb.checked=all.checked; TC_ROWS[+cb.dataset.i].sel=all.checked; });
+    tcUpdateCount();
+  });
+  box.querySelectorAll('.tc-sel').forEach(cb=>cb.addEventListener('change', ()=>{ TC_ROWS[+cb.dataset.i].sel=cb.checked; tcUpdateCount(); }));
+  box.querySelectorAll('.tc-sum').forEach(b=>b.addEventListener('click', ()=>{
+    const inp=box.querySelector(`.tc-val[data-i="${b.dataset.i}"]`);
+    inp.value=TC_ROWS[+b.dataset.i].sumVal; inp.dispatchEvent(new Event('input'));
+  }));
+  box.querySelectorAll('.tc-val').forEach(inp=>inp.addEventListener('input', ()=>{
+    const r=TC_ROWS[+inp.dataset.i]; const n=tcNum(inp.value);
+    r.nuevo = n==null ? null : n;
+    const cell=box.querySelector(`[data-diff="${inp.dataset.i}"]`);
+    const diff = r.actual==null || r.nuevo==null ? null : r.nuevo-r.actual;
+    cell.textContent = r.nuevo==null ? '—' : (diff==null ? 'nuevo' : (diff>0?'+':'')+tcFmtT(diff));
+    cell.className='num '+(diff==null||diff>0 ? 'tc-up' : (diff<0 ? 'tc-down' : ''));
+    if(!r.sel){ r.sel=true; box.querySelector(`.tc-sel[data-i="${inp.dataset.i}"]`).checked=true; }
+    tcUpdateCount();
+  }));
+  tcUpdateCount();
+}
+
+function tcUpdateCount(){
+  const n=TC_ROWS.filter(r=>r.sel && r.nuevo!=null).length;
+  const btn=document.getElementById('tonsApply');
+  btn.disabled=!n; btn.style.opacity=n?'1':'.5';
+  btn.textContent = n ? `Aplicar ${n} corrección${n===1?'':'es'}` : 'Aplicar correcciones';
+  document.getElementById('tonsCount').textContent='';
+}
+
+function tcReadFile(file){
+  if(!file) return;
+  document.getElementById('tonsFileName').textContent=file.name;
+  const box=document.getElementById('tonsResult');
+  box.innerHTML='<div class="tc-summary">Leyendo archivo…</div>';
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const wb=XLSX.read(new Uint8Array(ev.target.result), {type:'array', cellDates:true});
+      const stats=tcParseStats(wb);
+      if(!stats){
+        box.innerHTML='<div class="notice error" style="display:block;margin-top:12px;"><b>No se encontró la tabla.</b> El Excel debe tener las columnas "Nave" y "Toneladas embarcadas" / "Tonelaje descargado".</div>';
+        TC_ROWS=[]; tcUpdateCount(); return;
+      }
+      tcRender(stats, tcMatch(stats));
+    }catch(err){
+      box.innerHTML=`<div class="notice error" style="display:block;margin-top:12px;"><b>Error al leer el archivo.</b> ${esc(err.message||String(err))}</div>`;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function tcOpen(){
+  TC_ROWS=[];
+  document.getElementById('tonsResult').innerHTML='';
+  document.getElementById('tonsFileName').textContent='';
+  tcUpdateCount();
+  document.getElementById('tonsModalBackdrop').style.display='flex';
+}
+function tcClose(){ document.getElementById('tonsModalBackdrop').style.display='none'; }
+
+document.getElementById('btnTonsFix').addEventListener('click', ()=>{
+  if(!window.__editMode){
+    const p=window.prompt('Ingresa la clave para corregir toneladas:');
+    if(p===null) return;
+    if(p.trim().toUpperCase()!==EDIT_PASSWORD.toUpperCase()){
+      const un=document.getElementById('uploadNotice');
+      un.className='notice error'; un.style.display='block';
+      un.innerHTML='<b>Clave incorrecta.</b> No se abrió la corrección de toneladas.';
+      return;
+    }
+  }
+  tcOpen();
+});
+document.getElementById('tonsClose').addEventListener('click', tcClose);
+document.getElementById('tonsCancel').addEventListener('click', tcClose);
+document.getElementById('tonsModalBackdrop').addEventListener('click', e=>{ if(e.target.id==='tonsModalBackdrop') tcClose(); });
+const tcDrop=document.getElementById('tonsDrop');
+tcDrop.addEventListener('click', ()=>document.getElementById('tonsInput').click());
+tcDrop.addEventListener('dragover', e=>{ e.preventDefault(); tcDrop.classList.add('over'); });
+tcDrop.addEventListener('dragleave', ()=>tcDrop.classList.remove('over'));
+tcDrop.addEventListener('drop', e=>{ e.preventDefault(); tcDrop.classList.remove('over'); tcReadFile(e.dataTransfer.files[0]); });
+document.getElementById('tonsInput').addEventListener('change', e=>{ tcReadFile(e.target.files[0]); e.target.value=''; });
+
+document.getElementById('tonsApply').addEventListener('click', ()=>{
+  const sel=TC_ROWS.filter(r=>r.sel && r.nuevo!=null);
+  let ok=0;
+  sel.forEach(r=>{
+    const v=(DATA[r.site]||[]).find(x=>x.n===r.n && x.nave===r.nave);
+    if(v){ v.tons=Math.round(r.nuevo*1000)/1000; ok++; }
+  });
+  tcClose();
+  if(ok) persistAndRefresh();
+  const un=document.getElementById('uploadNotice');
+  un.className='notice success'; un.style.display='block';
+  un.innerHTML=`<b>Toneladas actualizadas.</b> Se corrigieron ${ok} nave${ok===1?'':'s'} con los datos reales de embarque y descarga.`;
+  setTimeout(()=>{ un.style.display='none'; }, 8000);
 });
 
 // ---------- Edit mode: password-gated add/edit/delete + persistence via Firestore (shared, real-time) ----------
