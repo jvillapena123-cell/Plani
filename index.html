@@ -343,6 +343,15 @@
   .tc-sub{display:block;font-size:10.5px;color:var(--text-faint);}
   .tc-warn{display:block;margin-top:3px;font-size:10.5px;color:#9A5B12;background:#FFF4E5;border-radius:6px;padding:3px 6px;}
   .tc-sum{margin-left:4px;font-family:inherit;font-size:10.5px;font-weight:700;color:var(--teal);background:#fff;border:1px solid var(--teal);border-radius:5px;padding:1px 6px;cursor:pointer;}
+  .tc-totals{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 10px;}
+  .tc-totals div{flex:1;min-width:150px;background:#F1F3F7;border-radius:10px;padding:8px 12px;}
+  .tc-totals span{display:block;font-size:10.5px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.03em;}
+  .tc-totals b{font-size:16px;color:var(--text);font-variant-numeric:tabular-nums;}
+  .tc-totals .ok{background:var(--green-dim);} .tc-totals .ok b{color:var(--green);}
+  .tc-totals .bad{background:var(--red-dim);} .tc-totals .bad b{color:var(--red);}
+  .tc-table select{min-width:72px;}
+  .tc-h4{margin:18px 0 6px;font-size:14px;color:var(--text);}
+  .tc-tools select,.tc-table select{font-family:inherit;font-size:12.5px;padding:4px 6px;border-radius:7px;border:1px solid var(--border-soft);}
   .tc-empty{padding:18px;text-align:center;color:var(--text-faint);font-size:13px;}
   .tc-unmatched{margin-top:10px;font-size:12px;color:var(--text-dim);}
   .tc-unmatched summary{cursor:pointer;font-weight:600;}
@@ -1616,7 +1625,7 @@ document.getElementById('excelInput').addEventListener('change', function(e){
 // ---------- Ventana: corregir toneladas (embarcadas / descargadas) desde la Estadística Operacional de Naves ----------
 const TC_TOL_DAYS = 20;       // diferencia máxima de días entre la ETA planificada y el arribo/atraque real
 const TC_MIN_NAME = 0.8;      // similitud mínima de nombre (tolera errores de tipeo: AGHYA/AGHIA, DRAKO/DRACO)
-let TC_ROWS = [];
+let TC_ROWS = [], TC_ADD = [], TC_YEAR = null, TC_DEL = [], TC_STATS = null;
 
 function tcHead(s){ return String(s==null?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/\s+/g,' ').trim(); }
 function tcName(s){
@@ -1666,7 +1675,9 @@ function tcParseStats(wb){
       const cNave=col(/^NAVES?$/), cEmb=col(/TONELA(DAS|JE) EMBARCAD/), cDes=col(/TONELA(DAS|JE) DESCARGAD/);
       if(cNave<0 || (cEmb<0 && cDes<0)) continue;
       const c={proc:col(/^PROCESO$|^FAENA$/), sitio:col(/^SITIO$/), arribo:col(/^ARRIBO$/), pob:col(/^POB$/),
-               linea:col(/^PRIMERA LINEA$/), ini:col(/^INICIO/), zarpe:col(/^ZARPE$/), prod:col(/^PRODUCTO$/)};
+               linea:col(/^PRIMERA LINEA$/), ini:col(/^INICIO/), zarpe:col(/^ZARPE$/), prod:col(/^PRODUCTO$/),
+               cliente:col(/^CLIENTE$/), ult:col(/^ULTIMA LINEA$/)};
+      const dt=(row,k)=> c[k]>=0 ? tcDate(row[c[k]]) : null;
       const out=[];
       for(let d=r+1; d<rows.length; d++){
         const row=rows[d]||[];
@@ -1679,7 +1690,10 @@ function tcParseStats(wb){
         out.push({ fila:d+1, nave, key:tcName(nave), emb, des,
           proc: c.proc>=0 && row[c.proc]!=null ? String(row[c.proc]).trim() : '',
           prod: c.prod>=0 && row[c.prod]!=null ? String(row[c.prod]).trim() : '',
-          sitio: c.sitio>=0 ? tcHead(row[c.sitio]) : '', dates });
+          sitio: c.sitio>=0 ? tcHead(row[c.sitio]) : '', dates,
+          cliente: c.cliente>=0 && row[c.cliente]!=null ? String(row[c.cliente]).trim() : '',
+          dArr: dt(row,'arribo')||dt(row,'pob')||dt(row,'linea'), dAtr: dt(row,'linea')||dt(row,'pob')||dt(row,'arribo'),
+          dZar: dt(row,'zarpe')||dt(row,'ult')||dt(row,'linea') });
       }
       return {sheet:name, rows:out};
     }
@@ -1723,7 +1737,7 @@ function tcMatch(stats){
     if(t.v==null) return;
     const nuevo=Math.round(t.v*1000)/1000;
     const actual=p.v.tons==null ? null : Number(p.v.tons);
-    const differs = actual==null || Math.abs(nuevo-actual)>=0.5;
+    const differs = actual==null || Math.abs(nuevo-actual)>0.0005;
     res.push({ site:p.site, n:p.v.n, nave:p.v.nave, faena:p.v.faena, eta:parseDate(p.v.eta),
       actual, nuevo, tipo:t.tipo, xNave:p.x.nave, xFila:p.x.fila, xProd:p.x.prod, differs, sel:differs });
   });
@@ -1736,12 +1750,24 @@ function tcMatch(stats){
     let sum=r.nuevo;
     sibs.forEach(y=>{ const t=tcTonsFor(r.faena,y); if(t.v!=null) sum+=t.v; });
     r.sibs=sibs.map(y=>({fila:y.fila, v:tcTonsFor(r.faena,y).v}));
+    sibs.forEach(y=>{ y.sibOf=r.nave; });
     r.sumVal=Math.round(sum*1000)/1000;
-    r.sel=false;            // requiere revisión: puede ser una sola estadía registrada en dos filas
   });
   res.sort((a,b)=>(a.eta||0)-(b.eta||0));
-  const unmatched=stats.rows.filter((x,i)=>!usedX.has(i));
-  return {res, unmatched};
+  const unmatched=stats.rows.filter((x,i)=>!usedX.has(i)).map(x=>{
+    const t=tcTonsFor(x.proc,x);
+    const d=x.dArr||x.dates[0];
+    return { x, tons:t.v==null?null:Math.round(t.v*1000)/1000, year:d.getFullYear(), date:d,
+             site: x.sitio.startsWith('NORTE') ? 'norte' : 'sur', add:true };
+  }).filter(u=>u.tons!=null);
+  const planiOnly=[];
+  ['norte','sur'].forEach(site=>(DATA[site]||[]).forEach(v=>{
+    if(usedV.has(v) || v.tons==null) return;
+    const d=parseDate(v.eta); if(!d || isNaN(d)) return;
+    planiOnly.push({site, n:v.n, nave:v.nave, faena:v.faena, tons:Number(v.tons), eta:d, year:d.getFullYear(), del:false});
+  }));
+  planiOnly.sort((a,b)=>a.eta-b.eta);
+  return {res, unmatched, planiOnly};
 }
 
 function tcRender(stats, match){
@@ -1781,11 +1807,46 @@ function tcRender(stats, match){
     });
     html+=`</tbody></table></div>`;
   }
-  if(match.unmatched.length){
-    html+=`<details class="tc-unmatched"><summary>${match.unmatched.length} recaladas del Excel sin nave equivalente en la planificación</summary>
-      <div style="margin-top:6px;line-height:1.6;">${match.unmatched.map(x=>esc(x.nave)+' ('+tcFmtDate(x.dates[0])+')').join(' · ')}</div></details>`;
+  TC_ADD=match.unmatched; TC_DEL=match.planiOnly; TC_STATS=stats;
+  const years=[...new Set(stats.rows.map(x=>(x.dArr||x.dates[0]).getFullYear()))].sort((a,b)=>b-a);
+  if(TC_YEAR==null || !years.includes(TC_YEAR)) TC_YEAR=years[0];
+  if(TC_ADD.length){
+    const list=TC_ADD.map((u,i)=>({u,i})).filter(o=>o.u.year===TC_YEAR);
+    const tot=list.reduce((a,o)=>a+(o.u.tons||0),0);
+    html+=`<h4 class="tc-h4">Naves del Excel que faltan en la planificación</h4>
+      <div class="tc-tools">
+        <span>${list.length} recaladas de ${TC_YEAR} · ${tcFmtT(tot)} t</span>
+        <label><input type="checkbox" id="tcAddAll"> Marcar / desmarcar todas</label>
+      </div>
+      <div class="tc-wrap" style="max-height:38vh;"><table class="tc-table"><thead><tr>
+        <th></th><th>Sitio</th><th>Nave</th><th>Faena</th><th>Producto</th><th>Cliente</th><th>Arribo</th><th>Zarpe</th><th class="num">Tons</th>
+      </tr></thead><tbody>`;
+    list.forEach(({u,i})=>{
+      html+=`<tr><td><input type="checkbox" class="tc-add" data-i="${i}" ${u.add?'checked':''}></td>
+        <td><select class="tc-site" data-i="${i}"><option value="norte" ${u.site==='norte'?'selected':''}>Norte</option><option value="sur" ${u.site==='sur'?'selected':''}>Sur</option></select></td>
+        <td><b>${esc(u.x.nave)}</b><span class="tc-sub">Fila ${u.x.fila}${u.x.sibOf?' · otra recalada de '+esc(u.x.sibOf)+' (si usas la suma, no la agregues)':''}</span></td>
+        <td>${esc(u.x.proc)}</td><td>${esc(u.x.prod)}</td><td>${esc(u.x.cliente)}</td>
+        <td>${tcFmtDate(u.x.dArr)}</td><td>${tcFmtDate(u.x.dZar)}</td>
+        <td class="num">${tcFmtT(u.tons)}</td></tr>`;
+    });
+    html+=`</tbody></table></div>`;
   }
+  const dl=TC_DEL.map((d,i)=>({d,i})).filter(o=>o.d.year===TC_YEAR);
+  if(dl.length){
+    html+=`<h4 class="tc-h4">En la planificación pero no en el Excel (${TC_YEAR})</h4>
+      <div class="tc-summary" style="margin-top:0;">Normalmente son naves programadas que aún no operan. Márcalas solo si no recalaron.</div>
+      <div class="tc-wrap" style="max-height:26vh;"><table class="tc-table"><thead><tr>
+        <th>Quitar</th><th>Sitio</th><th>Nave</th><th>Faena</th><th>ETA</th><th class="num">Tons</th></tr></thead><tbody>`;
+    dl.forEach(({d,i})=>{
+      html+=`<tr><td><input type="checkbox" class="tc-del" data-i="${i}" ${d.del?'checked':''}></td><td>${d.site==='norte'?'Norte':'Sur'}</td>
+        <td><b>${esc(d.nave)}</b></td><td>${esc(d.faena||'')}</td><td>${tcFmtDate(d.eta)}</td><td class="num">${tcFmtT(d.tons)}</td></tr>`;
+    });
+    html+=`</tbody></table></div>`;
+  }
+  const yearSel=`<label>Año <select id="tcYear">${years.map(y=>`<option value="${y}" ${y===TC_YEAR?'selected':''}>${y}</option>`).join('')}</select></label>`;
+  html=html.replace('<div class="tc-tools">', `<div class="tc-totals" id="tcTotals"></div><div class="tc-tools">${yearSel}`);
   box.innerHTML=html;
+  box.querySelectorAll('.tc-del').forEach(cb=>cb.addEventListener('change', ()=>{ TC_DEL[+cb.dataset.i].del=cb.checked; tcUpdateCount(); }));
 
   document.getElementById('tcShowAll').addEventListener('change', ()=>tcRender(stats, match));
   const all=document.getElementById('tcAll');
@@ -1794,7 +1855,17 @@ function tcRender(stats, match){
     tcUpdateCount();
   });
   box.querySelectorAll('.tc-sel').forEach(cb=>cb.addEventListener('change', ()=>{ TC_ROWS[+cb.dataset.i].sel=cb.checked; tcUpdateCount(); }));
+  const yr=document.getElementById('tcYear');
+  if(yr) yr.addEventListener('change', ()=>{ TC_YEAR=+yr.value; tcRender(stats, match); });
+  const aa=document.getElementById('tcAddAll');
+  if(aa) aa.addEventListener('change', ()=>{
+    box.querySelectorAll('.tc-add').forEach(cb=>{ cb.checked=aa.checked; TC_ADD[+cb.dataset.i].add=aa.checked; }); tcUpdateCount();
+  });
+  box.querySelectorAll('.tc-add').forEach(cb=>cb.addEventListener('change', ()=>{ TC_ADD[+cb.dataset.i].add=cb.checked; tcUpdateCount(); }));
+  box.querySelectorAll('.tc-site').forEach(sl=>sl.addEventListener('change', ()=>{ TC_ADD[+sl.dataset.i].site=sl.value; }));
   box.querySelectorAll('.tc-sum').forEach(b=>b.addEventListener('click', ()=>{
+    const filas=(TC_ROWS[+b.dataset.i].sibs||[]).map(y=>y.fila);
+    TC_ADD.forEach((u,j)=>{ if(filas.includes(u.x.fila)){ u.add=false; const cb=box.querySelector(`.tc-add[data-i="${j}"]`); if(cb) cb.checked=false; } });
     const inp=box.querySelector(`.tc-val[data-i="${b.dataset.i}"]`);
     inp.value=TC_ROWS[+b.dataset.i].sumVal; inp.dispatchEvent(new Event('input'));
   }));
@@ -1811,11 +1882,36 @@ function tcRender(stats, match){
   tcUpdateCount();
 }
 
+function tcAddList(){ return TC_ADD.filter(u=>u.add && u.year===TC_YEAR); }
+function tcDelList(){ return TC_DEL.filter(d=>d.del && d.year===TC_YEAR); }
+function tcTotals(){
+  const el=document.getElementById('tcTotals'); if(!el || !TC_STATS) return;
+  const y=TC_YEAR;
+  const xl=TC_STATS.rows.filter(x=>(x.dArr||x.dates[0]).getFullYear()===y).reduce((a,x)=>a+(tcTonsFor(x.proc,x).v||0),0);
+  const corr=new Map(TC_ROWS.filter(r=>r.sel && r.nuevo!=null).map(r=>[r.site+'|'+r.n+'|'+r.nave, r.nuevo]));
+  const del=new Set(tcDelList().map(d=>d.site+'|'+d.n+'|'+d.nave));
+  let now=0, after=0;
+  ['norte','sur'].forEach(site=>(DATA[site]||[]).forEach(v=>{
+    const d=parseDate(v.eta); if(!d || isNaN(d) || d.getFullYear()!==y) return;
+    const k=site+'|'+v.n+'|'+v.nave, t=Number(v.tons)||0;
+    now+=t; if(del.has(k)) return; after+= corr.has(k) ? corr.get(k) : t;
+  }));
+  after+=tcAddList().reduce((a,u)=>a+(u.tons||0),0);
+  const diff=after-xl, ok=Math.abs(diff)<0.5;
+  el.innerHTML=`<div><span>Total Excel ${y}</span><b>${tcFmtT(xl)} t</b></div>
+    <div><span>Plani hoy</span><b>${tcFmtT(now)} t</b></div>
+    <div><span>Plani al aplicar</span><b>${tcFmtT(after)} t</b></div>
+    <div class="${ok?'ok':'bad'}"><span>Diferencia</span><b>${ok?'0 t ✓':(diff>0?'+':'')+tcFmtT(diff)+' t'}</b></div>`;
+}
 function tcUpdateCount(){
-  const n=TC_ROWS.filter(r=>r.sel && r.nuevo!=null).length;
+  const n=TC_ROWS.filter(r=>r.sel && r.nuevo!=null).length, a=tcAddList().length;
   const btn=document.getElementById('tonsApply');
-  btn.disabled=!n; btn.style.opacity=n?'1':'.5';
-  btn.textContent = n ? `Aplicar ${n} corrección${n===1?'':'es'}` : 'Aplicar correcciones';
+  btn.disabled=!(n+a); btn.style.opacity=(n+a)?'1':'.5';
+  const parts=[]; if(n) parts.push(n===1?'1 corrección':`${n} correcciones`); if(a) parts.push(`agregar ${a} nave${a===1?'':'s'}`);
+  const q=tcDelList().length; if(q) parts.push(`quitar ${q}`);
+  btn.disabled=!(n+a+q); btn.style.opacity=(n+a+q)?'1':'.5';
+  btn.textContent = parts.length ? 'Aplicar: '+parts.join(' + ') : 'Aplicar correcciones';
+  tcTotals();
   document.getElementById('tonsCount').textContent='';
 }
 
@@ -1842,7 +1938,7 @@ function tcReadFile(file){
 }
 
 function tcOpen(){
-  TC_ROWS=[];
+  TC_ROWS=[]; TC_ADD=[]; TC_YEAR=null; TC_DEL=[]; TC_STATS=null;
   document.getElementById('tonsResult').innerHTML='';
   document.getElementById('tonsFileName').textContent='';
   tcUpdateCount();
@@ -1880,11 +1976,30 @@ document.getElementById('tonsApply').addEventListener('click', ()=>{
     const v=(DATA[r.site]||[]).find(x=>x.n===r.n && x.nave===r.nave);
     if(v){ v.tons=Math.round(r.nuevo*1000)/1000; ok++; }
   });
+  const iso=d=> d ? d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'T00:00:00' : null;
+  let removed=0;
+  tcDelList().forEach(d=>{
+    const before=(DATA[d.site]||[]).length;
+    DATA[d.site]=(DATA[d.site]||[]).filter(v=>!(v.n===d.n && v.nave===d.nave));
+    removed+=before-DATA[d.site].length;
+  });
+  let added=0;
+  tcAddList().forEach(u=>{
+    const site=u.site, x=u.x;
+    const n=(DATA[site]||[]).reduce((m,v)=>Math.max(m,v.n||0),0)+1;
+    DATA[site].push({ n, nave:x.nave.toUpperCase(), agencia:'', cliente:(x.cliente||'').toUpperCase(),
+      faena:(x.proc||'').toUpperCase(), producto:(x.prod||'').toUpperCase(), tons:u.tons,
+      eta:iso(x.dArr), etb:iso(x.dAtr||x.dArr), etd:iso(x.dZar||x.dAtr||x.dArr), color:null,
+      eta_h1:null, eta_h2:null, etb_h1:null, etb_h2:null, etd_h1:null, etd_h2:null });
+    added++;
+  });
   tcClose();
-  if(ok) persistAndRefresh();
+  if(ok || added || removed) persistAndRefresh();
   const un=document.getElementById('uploadNotice');
   un.className='notice success'; un.style.display='block';
-  un.innerHTML=`<b>Toneladas actualizadas.</b> Se corrigieron ${ok} nave${ok===1?'':'s'} con los datos reales de embarque y descarga.`;
+  un.innerHTML=`<b>Planificación actualizada.</b> Se corrigieron las toneladas de ${ok} nave${ok===1?'':'s'}`+
+    (added ? `, se agregaron ${added} nave${added===1?'':'s'} desde el Excel` : '')+
+    (removed ? ` y se quitaron ${removed}` : '')+'.';
   setTimeout(()=>{ un.style.display='none'; }, 8000);
 });
 
