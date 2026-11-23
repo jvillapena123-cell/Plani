@@ -633,6 +633,7 @@
       <button class="btn-today" id="btnPrevMonth" title="Mes anterior" style="padding:9px 12px;">‹</button>
       <select id="monthSelect"></select>
       <button class="btn-today" id="btnNextMonth" title="Mes siguiente" style="padding:9px 12px;">›</button>
+      <select id="yearAllSelect" title="Año" style="display:none"><option value="all">Todos los años</option></select>
       <select id="spanSelect">
         <option value="1">1 mes</option>
         <option value="2">2 meses</option>
@@ -949,6 +950,12 @@ function stepMonth(delta){
 document.getElementById('btnPrevMonth').addEventListener('click', ()=> stepMonth(-1));
 document.getElementById('btnNextMonth').addEventListener('click', ()=> stepMonth(1));
 document.getElementById('spanSelect').addEventListener('change', render);
+document.getElementById('yearAllSelect').addEventListener('change', ()=>{
+  const v = document.getElementById('yearAllSelect').value;
+  try{ localStorage.setItem('plani_all_year', v); }catch(e){}
+  if(v!=='all' && [2026,2027].includes(+v)) window.HX_YEAR = +v;
+  render();
+});
 // Vista por defecto (formato lámina): mes anterior + mes actual.
 function setDefaultRange(){
   let idx = months.findIndex(({y,m})=> y===today.getFullYear() && m===today.getMonth());
@@ -1408,9 +1415,30 @@ function render(){
     span = Math.max(1, (maxD.getFullYear()-y0)*12 + (maxD.getMonth()-m0) + 1);
   }
   spanSelect.disabled = isAll;
+  spanSelect.style.display = isAll ? 'none' : '';
+  // Selector de año (solo con "Todos los meses"): Todos los años o un año puntual
+  const yAllSel = document.getElementById('yearAllSelect');
+  let allYear = 'all';
+  if(yAllSel){
+    yAllSel.style.display = isAll ? '' : 'none';
+    const yrsAvail = [];
+    if(minD && maxD) for(let y=minD.getFullYear(); y<=maxD.getFullYear(); y++) yrsAvail.push(String(y));
+    let want = yAllSel.value;
+    if(yAllSel.options.length<=1){ try{ want = localStorage.getItem('plani_all_year') || 'all'; }catch(e){ want='all'; } }
+    yAllSel.innerHTML = '<option value="all">Todos los años</option>' + yrsAvail.map(y=>`<option value="${y}">${y}</option>`).join('');
+    yAllSel.value = yrsAvail.includes(want) ? want : 'all';
+    allYear = yAllSel.value;
+  }
 
   let rangeStart, rangeEnd, rangeLabel;
-  if(isAll){
+  if(isAll && allYear!=='all'){
+    const ay = Number(allYear);
+    rangeStart = new Date(ay, 0, 1);
+    rangeEnd = new Date(ay, 11, 31);
+    if(minD && minD.getFullYear()===ay) rangeStart = new Date(ay, minD.getMonth(), 1);
+    if(maxD && maxD.getFullYear()===ay) rangeEnd = new Date(ay, maxD.getMonth()+1, 0);
+    rangeLabel = 'todo '+ay;
+  } else if(isAll){
     rangeStart = new Date(minD.getFullYear(), minD.getMonth(), 1);
     rangeEnd = new Date(maxD.getFullYear(), maxD.getMonth()+1, 0);
     rangeLabel = 'todos los meses';
@@ -1438,7 +1466,7 @@ function render(){
     shown = shown.concat(buildSite(container, 'sur', 'Huachipato — Sitio Sur', sur, rangeStart, rangeEnd, rangeLabel, isMulti, withUpcoming) || []);
   }
   const pl = document.getElementById('periodLabel');
-  if(pl) pl.textContent = isAll ? 'Todos los meses' : periodText(rangeStart, rangeEnd);
+  if(pl) pl.textContent = isAll ? (allYear==='all' ? 'Todos los meses' : 'Todos los meses '+allYear) : periodText(rangeStart, rangeEnd);
   renderSummary(shown, rangeStart, rangeEnd);
 
   // Notice for known data issues visible in the selected range
