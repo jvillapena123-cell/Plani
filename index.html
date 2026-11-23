@@ -884,8 +884,9 @@ function loadData(dataObj, updateLabel){
 
   months = [];
   if(minD && maxD){
-    let cur = new Date(minD.getFullYear(), minD.getMonth(), 1);
-    const end = new Date(maxD.getFullYear(), maxD.getMonth(), 1);
+    // Años completos: de enero del primer año a diciembre del último
+    let cur = new Date(minD.getFullYear(), 0, 1);
+    const end = new Date(maxD.getFullYear(), 11, 1);
     while(cur<=end){
       months.push({y:cur.getFullYear(), m:cur.getMonth()});
       cur = new Date(cur.getFullYear(), cur.getMonth()+1, 1);
@@ -1435,8 +1436,6 @@ function render(){
     const ay = Number(allYear);
     rangeStart = new Date(ay, 0, 1);
     rangeEnd = new Date(ay, 11, 31);
-    if(minD && minD.getFullYear()===ay) rangeStart = new Date(ay, minD.getMonth(), 1);
-    if(maxD && maxD.getFullYear()===ay) rangeEnd = new Date(ay, maxD.getMonth()+1, 0);
     rangeLabel = 'todo '+ay;
   } else if(isAll){
     rangeStart = new Date(minD.getFullYear(), minD.getMonth(), 1);
